@@ -1,21 +1,25 @@
-import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
-import { FeaturesCarousel } from "@/components/features-carousel"
-import { UniversitySelector } from "@/components/university-selector"
-import { WelcomeSection } from "@/components/welcome-section"
-import { WhyChooseUs } from "@/components/why-choose-us"
+import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { HeroSection } from "@/components/landing/hero-section"
+import { FeaturesSection } from "@/components/landing/features-section"
+import { PopularPacksSection } from "@/components/landing/popular-packs-section"
+import { StatsSection } from "@/components/landing/stats-section"
+import { AboutSection } from "@/components/landing/about-section"
+import { ContactSection } from "@/components/landing/contact-section"
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
-      <FeaturesCarousel />
-      <UniversitySelector />
-      <WelcomeSection />
-      <WhyChooseUs />
+    <div className="flex min-h-screen flex-col" suppressHydrationWarning>
+      <Navbar />
+      <main className="flex-1">
+        <HeroSection />
+        <FeaturesSection />
+        <PopularPacksSection />
+        <StatsSection />
+        <AboutSection />
+        <ContactSection />
+      </main>
       <Footer />
-    </main>
+    </div>
   )
 }

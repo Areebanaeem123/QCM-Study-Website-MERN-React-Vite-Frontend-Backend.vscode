@@ -1,17 +1,25 @@
 import type React from "react"
-import type { Metadata } from "next"
-import { Inter, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
 import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
 
-const _inter = Inter({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+})
 
 export const metadata: Metadata = {
-  title: "QCM-Study | Des QCM pour réussir ta 1ère année de médecine",
+  title: "QCM Study - Maîtrisez Vos Examens Médicaux",
   description:
-    "Préparez vos examens de médecine avec nos QCM. Des packs abordables dès 10 CHF avec corrections détaillées pour les étudiants de l'Université de Genève.",
+    "Plateforme de préparation aux examens médicaux avec QCM, examens blancs et analyses de performance pour les étudiants en médecine.",
     generator: 'v0.app'
+}
+
+export const viewport: Viewport = {
+  themeColor: "#7a1f1f",
+  width: "device-width",
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -21,9 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`}>
         {children}
-        <Analytics />
+        <Toaster />
       </body>
     </html>
   )
