@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, Loader2, Camera } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
+import DashboardShell from "@/components/dashboard/dashboard-shell"
 export default function ProfilePage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)

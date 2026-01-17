@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Link from "next/link"
 import { Play, Clock, BookOpen, Settings } from "lucide-react"
-
+import DashboardShell from "@/components/dashboard/dashboard-shell"
 // Dummy data for available packs
 const availablePacks = [
   { id: 1, name: "Pack Médecine Essentiel", qcmCount: 2000 },

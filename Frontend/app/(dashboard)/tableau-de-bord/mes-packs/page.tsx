@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Play, Calendar } from "lucide-react"
-
+import DashboardShell from "@/components/dashboard/dashboard-shell"
 // Dummy data
 const purchasedPacks = [
   {

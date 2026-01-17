@@ -62,11 +62,11 @@ export function DashboardSidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-4">
+        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-4" suppressHydrationWarning>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-foreground">
             <GraduationCap className="h-5 w-5 text-sidebar" />
           </div>
-          <span className="text-xl font-bold">QCM Study</span>
+          <span className="text-xl font-bold" suppressHydrationWarning>QCM Study</span>
         </div>
 
         {/* Navigation */}
@@ -84,22 +84,24 @@ export function DashboardSidebar() {
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                 )}
+                suppressHydrationWarning
               >
                 <link.icon className="h-5 w-5" />
-                {link.label}
+                <span suppressHydrationWarning>{link.label}</span>
               </Link>
             )
           })}
         </nav>
 
         {/* Logout */}
-        <div className="border-t border-sidebar-border p-4">
+        <div className="border-t border-sidebar-border p-4" suppressHydrationWarning>
           <Link
             href="/"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+            suppressHydrationWarning
           >
             <LogOut className="h-5 w-5" />
-            Déconnexion
+            <span suppressHydrationWarning>Déconnexion</span>
           </Link>
         </div>
       </aside>
