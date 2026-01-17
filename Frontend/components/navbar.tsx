@@ -13,7 +13,6 @@ const navLinks = [
   { href: "/#contact", label: "Contact" },
   { href: "/universities", label: "Universités" }, //it means its a separate page here 
 ]
-
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 

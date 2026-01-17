@@ -1,7 +1,5 @@
 "use client"
-
 import { useEffect } from "react"
-
 /**
  * Component to fix Google Translate hydration issues
  * This prevents Google Translate from interfering with React's DOM management
