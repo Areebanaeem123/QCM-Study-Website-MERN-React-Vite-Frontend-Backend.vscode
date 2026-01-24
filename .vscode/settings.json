@@ -1,0 +1,17 @@
+{
+  "typescript.tsdk": "Frontend/node_modules/typescript/lib",
+  "typescript.enable": true,
+  "files.exclude": {
+    "**/Backend/**/*.py": false
+  },
+  "files.associations": {
+    "**/Backend/**/*.py": "python"
+  },
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/Backend"
+  ],
+  "typescript.preferences.excludePackageJsonAutoImports": "off"
+}
+
+
+

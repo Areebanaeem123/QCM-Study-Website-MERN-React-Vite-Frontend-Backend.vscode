@@ -131,10 +131,24 @@ export default function SignUpPage() {
     if (!validateStep3()) return
 
     setIsLoading(true)
-    // Simulate registration
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
-    router.push("/inscription/confirmation")
+    setErrors({})
+
+    try {
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim()
+      const { register } = await import("@/lib/auth-fastapi")
+      
+      await register(fullName, formData.email, formData.password, 1)
+      
+      // Registration successful
+      router.push("/inscription/confirmation")
+    } catch (error: any) {
+      console.error("Registration error:", error)
+      setErrors({
+        general: error.message || "Une erreur s'est produite lors de l'inscription",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const renderStep1 = () => (
@@ -414,6 +428,12 @@ export default function SignUpPage() {
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
+
+            {errors.general && (
+              <div className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-3">
+                <p className="text-sm text-destructive text-center">{errors.general}</p>
+              </div>
+            )}
 
             <div className="mt-6 flex gap-4">
               {step > 1 && (

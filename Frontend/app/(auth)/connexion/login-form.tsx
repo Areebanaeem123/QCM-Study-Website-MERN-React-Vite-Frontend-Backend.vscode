@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { login } from "@/lib/auth-fastapi"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,10 +44,14 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      await new Promise((r) => setTimeout(r, 1500))
-      router.push("/tableau-de-bord/classement")
-    } catch {
-      setErrors({ general: "Une erreur s'est produite lors de la connexion" })
+      await login(formData.email, formData.password)
+      router.push("/tableau-de-bord")
+      router.refresh()
+    } catch (error: any) {
+      console.error("Login error:", error)
+      setErrors({
+        general: error.message || "Email ou mot de passe incorrect",
+      })
     } finally {
       setIsLoading(false)
     }
