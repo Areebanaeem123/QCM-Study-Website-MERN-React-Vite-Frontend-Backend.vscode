@@ -4,7 +4,7 @@ Run this script once to set up the database schema.
 """
 from app.core.database import Base, engine
 # Import all models so SQLAlchemy knows about them
-from app.models import User, University
+from app.models import User, University , Subject
 
 if __name__ == "__main__":
     print("Creating database tables...")

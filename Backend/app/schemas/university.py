@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.schemas.auth import UserResponse
-
+from uuid import UUID
 class UniversityCreate(BaseModel):
     name: str
     is_displayed: bool = True
