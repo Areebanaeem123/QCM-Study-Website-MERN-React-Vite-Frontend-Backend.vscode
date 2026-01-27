@@ -23,7 +23,7 @@ python -c "from app.core.database import Base, engine; Base.metadata.create_all(
 ## Running the Server
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload 
 ```
 
 The API will be available at `http://localhost:8000`

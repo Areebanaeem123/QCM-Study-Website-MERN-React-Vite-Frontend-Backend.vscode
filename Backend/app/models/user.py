@@ -43,4 +43,9 @@ class User(Base):
         "Lesson",
         back_populates="creator",
         cascade="all, delete-orphan"
+    )       
+    question_types = relationship(
+        "QuestionType",
+        back_populates="creator",
+        cascade="all, delete-orphan"
     )
