@@ -18,3 +18,4 @@ class University(Base):
     # Relationships
     creator = relationship("User", back_populates="universities")
     subjects= relationship("Subject", back_populates="university",cascade="all, delete")
+    lessons= relationship("Lesson", back_populates="university",cascade="all, delete")

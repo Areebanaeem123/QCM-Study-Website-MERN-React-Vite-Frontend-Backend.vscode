@@ -39,3 +39,8 @@ class User(Base):
         back_populates="creator",
         cascade="all, delete-orphan"
     )
+    lessons = relationship(
+        "Lesson",
+        back_populates="creator",
+        cascade="all, delete-orphan"
+    )

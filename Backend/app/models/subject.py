@@ -15,3 +15,4 @@ class Subject(Base):
     creator_name = Column(String, nullable=False)
 
     university = relationship("University", back_populates="subjects")
+    lessons = relationship("Lesson", back_populates="subject", cascade="all, delete")
