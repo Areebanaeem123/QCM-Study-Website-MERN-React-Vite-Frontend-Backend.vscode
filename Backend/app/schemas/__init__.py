@@ -3,6 +3,7 @@ from app.schemas.university import UniversityCreate, UniversityUpdate, Universit
 from app.schemas.subject import  SubjectCreate , SubjectUpdate , SubjectResponse
 from app.schemas.lesson import LessonCreate, LessonUpdate, LessonResponse
 from app.schemas.question_type import QuestionTypeCreate, QuestionTypeUpdate, QuestionTypeResponse
+from app.schemas.mcq import MCQOptionCreate , MCQOptionResponse , MCQCreate , MCQUpdate , MCQResponse , MCQApprovalCreate , MCQApprovalResponse
 __all__ = [
     "Token",
     "TokenData",
@@ -21,5 +22,12 @@ __all__ = [
     "QuestionTypeCreate",
     "QuestionTypeUpdate",
     "QuestionTypeResponse",
+    "MCQOptionCreate",
+    "MCQOptionResponse",
+    "MCQCreate",
+    "MCQUpdate",
+    "MCQResponse",
+    "MCQApprovalCreate",
+    "MCQApprovalResponse"
 ]
 
