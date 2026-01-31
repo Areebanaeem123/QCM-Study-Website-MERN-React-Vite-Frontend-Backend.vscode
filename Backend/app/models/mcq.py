@@ -2,6 +2,8 @@ from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from sqlalchemy.orm import relationship
+from app.models.mock_exam_mcq import mock_exam_mcqs
 import uuid
 class MCQ(Base):
     __tablename__ = "mcqs"
@@ -27,3 +29,9 @@ class MCQ(Base):
     # Relationships
     options = relationship("MCQOption", back_populates="mcq", cascade="all, delete-orphan")
     approvals = relationship("MCQApproval", back_populates="mcq", cascade="all, delete-orphan")
+    mock_exams = relationship("MockExam",secondary=mock_exam_mcqs, back_populates="questions")
+    question_banks = relationship(
+    "QuestionBank",
+    secondary="question_bank_mcqs",
+    back_populates="mcqs"
+)

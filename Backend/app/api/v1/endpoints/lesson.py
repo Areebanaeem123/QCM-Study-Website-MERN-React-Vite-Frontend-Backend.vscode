@@ -10,6 +10,7 @@ from app.models.subject import Subject
 from app.models.university import University
 from app.schemas.lesson import LessonCreate, LessonUpdate, LessonResponse
 from app.api.v1.endpoints.auth import require_admin
+
 router = APIRouter()
 # 📌 List lessons (optionally filter by university & subject)
 @router.get("/", response_model=List[LessonResponse])

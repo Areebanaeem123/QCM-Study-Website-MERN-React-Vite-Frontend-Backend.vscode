@@ -1,0 +1,21 @@
+import uuid
+from sqlalchemy import Column, String, ForeignKey, Integer, Text, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from app.core.database import Base
+
+
+class MockExamReview(Base):
+    __tablename__ = "mock_exam_reviews"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"))
+    mock_exam_id = Column(String, ForeignKey("mock_exams.id", ondelete="CASCADE"))
+
+    rating = Column(Integer, nullable=False)  # 1–5 stars
+    comment = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="mock_exam_reviews")
+    mock_exam = relationship("MockExam", back_populates="reviews")

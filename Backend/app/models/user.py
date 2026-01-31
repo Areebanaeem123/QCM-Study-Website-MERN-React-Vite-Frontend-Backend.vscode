@@ -49,4 +49,8 @@ class User(Base):
         back_populates="creator",
         cascade="all, delete-orphan"
     )
+    mock_exam_purchases = relationship("MockExamPurchase", back_populates="user", cascade="all, delete")
+    mock_exam_reviews = relationship("MockExamReview", back_populates="user", cascade="all, delete")
+    question_bank_purchases = relationship("QuestionBankPurchase", back_populates="user", cascade="all, delete")
+
     
