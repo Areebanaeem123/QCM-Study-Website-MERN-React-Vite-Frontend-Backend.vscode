@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import auth, universities , subjects , lesson ,question_type , mcqs , visualize_mcqs , user_router , packs , session
-from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router
+from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router , visualize_packs , mcq_research , feedback , page_router , slider_router
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authorization"])
@@ -17,5 +17,8 @@ api_router.include_router(mcq_filter_router.router , prefix="/mcq_filter_router"
 api_router.include_router(pack_mcq_router.router , prefix="/pack_mcq_router", tags=["Pack MCQ Management"])
 api_router.include_router(mock_exams_admin.router , prefix="/mock_exams_admin", tags=["Admin Mock Exams Operations"])
 api_router.include_router(question_bank_router.router , prefix="/question_bank_router", tags=["Question Bank operations"])
-
-
+api_router.include_router(visualize_packs.router, prefix="/visualize_packs", tags=["Visualize MCQs"])
+api_router.include_router(mcq_research.router, prefix="/mcq_research", tags=["MCQ Research"])
+api_router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
+api_router.include_router(page_router.router ,prefix="/pages", tags=["Frontend Page Update from Backend"])
+api_router.include_router(slider_router.router , prefix="/slider", tags=["Frontend Slider Update from Backend"])

@@ -3,8 +3,6 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from app.schemas.auth import UserResponse
-
-
 class LessonCreate(BaseModel):
     name: str
     university_id: str

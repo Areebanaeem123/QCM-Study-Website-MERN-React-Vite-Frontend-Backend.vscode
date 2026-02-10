@@ -25,7 +25,6 @@ const categoryPerformance = [
   { name: "Pharmacologie", score: 68, color: "bg-orange-500" },
   { name: "Physiologie", score: 78, color: "bg-blue-500" },
 ]
-
 export default function DashboardPage() {
   return (
     <div className="space-y-6" suppressHydrationWarning>

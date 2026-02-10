@@ -1,6 +1,8 @@
+"use client"
+
 import type React from "react"
 import Link from "next/link"
-import { GraduationCap } from "lucide-react"
+import Image from "next/image"
 
 export default function AuthLayout({
   children,
@@ -8,16 +10,20 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-muted/30" suppressHydrationWarning >
+    <div className="min-h-screen bg-muted/30" suppressHydrationWarning>
       {/* Header */}
       <header className="border-b border-border bg-background">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-primary">QCM Study</span>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.jpeg"
+                alt="QCM Study Logo"
+                width={140}
+                height={60}
+                priority
+                className="object-contain"
+              />
             </Link>
           </div>
         </div>

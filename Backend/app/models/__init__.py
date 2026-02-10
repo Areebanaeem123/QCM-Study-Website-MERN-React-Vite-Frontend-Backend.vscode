@@ -17,6 +17,10 @@ from app.models.mock_exam_review import MockExamReview
 from app.models.question_bank_mcq import question_bank_mcqs
 from app.models.question_bank_purchase import QuestionBankPurchase
 from app.models.question_bank import QuestionBank
+from app.models.pack_purchase import PackPurchase
+from app.models.pack_review import PackReview
+from app.models.page import Page 
+from app.models.slider import Slider
 __all__ = ["User", 
 "University", 
 "subject",
@@ -35,6 +39,10 @@ __all__ = ["User",
 "MockExamReview",
 "question_bank_mcqs",
 "QuestionBankPurchase",
-"QuestionBank"
+"QuestionBank",
+"PackPurchase",
+"PackReview",
+"Page",
+"Slider"
 ]
 

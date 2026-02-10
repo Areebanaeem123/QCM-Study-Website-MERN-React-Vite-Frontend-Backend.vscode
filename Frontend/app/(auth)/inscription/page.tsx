@@ -135,9 +135,9 @@ export default function SignUpPage() {
 
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim()
-      const { register } = await import("@/lib/auth-fastapi")
+      //const { register } = await import("@/lib/auth-fastapi")
       
-      await register(fullName, formData.email, formData.password, 1)
+      //await register(fullName, formData.email, formData.password, 1)
       
       // Registration successful
       router.push("/inscription/confirmation")

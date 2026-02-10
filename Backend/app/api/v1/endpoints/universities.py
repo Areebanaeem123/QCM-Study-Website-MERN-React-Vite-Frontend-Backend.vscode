@@ -7,6 +7,7 @@ from app.models.university import University
 from app.schemas.university import UniversityCreate, UniversityUpdate, UniversityResponse
 from app.api.v1.endpoints.auth import require_admin
 
+
 router = APIRouter()
 #router for listing all universities
 @router.get("/", response_model=List[UniversityResponse])
@@ -17,6 +18,7 @@ async def list_universities(
     """List all universities (admin only)."""
     universities = db.query(University).order_by(University.created_at.desc()).all()
     return universities
+
 
 #router for creating universities
 @router.post("/", response_model=UniversityResponse, status_code=status.HTTP_201_CREATED)
@@ -55,6 +57,8 @@ async def create_university(
     db.refresh(new_university)
     
     return new_university
+
+
 #router for getting a single university
 @router.get("/{university_id}", response_model=UniversityResponse)
 async def get_university(
@@ -72,6 +76,8 @@ async def get_university(
         )
     
     return university
+
+
 #router for updating a university
 @router.put("/{university_id}", response_model=UniversityResponse)
 async def update_university(
@@ -109,6 +115,7 @@ async def update_university(
     db.refresh(university)
     
     return university
+
 #router for deleting a university
 @router.delete("/{university_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_university(

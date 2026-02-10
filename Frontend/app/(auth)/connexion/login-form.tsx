@@ -1,17 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { login } from "@/lib/auth-fastapi"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 export default function LoginForm() {
   const router = useRouter()
-
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -43,18 +41,19 @@ export default function LoginForm() {
 
     setIsLoading(true)
 
-    try {
-      await login(formData.email, formData.password)
-      router.push("/tableau-de-bord")
-      router.refresh()
-    } catch (error: any) {
-      console.error("Login error:", error)
-      setErrors({
-        general: error.message || "Email ou mot de passe incorrect",
-      })
-    } finally {
+    setTimeout(() => {
       setIsLoading(false)
-    }
+
+      // ✅ Simple frontend "authentication" check
+      if (
+        formData.email === "Admin@gmail.com" &&
+        formData.password === "Admin1234"
+      ) {
+        router.push("/admin-dashboard") // redirect to admin dashboard
+      } else {
+        router.push("/tableau-de-bord") // redirect to student dashboard
+      }
+    }, 1500)
   }
 
   return (
@@ -103,7 +102,10 @@ export default function LoginForm() {
       </div>
 
       <div className="flex justify-end">
-        <Link href="/mot-de-passe-oublie" className="text-sm text-primary hover:underline">
+        <Link
+          href="/mot-de-passe-oublie"
+          className="text-sm text-primary hover:underline"
+        >
           Mot de passe oublié ?
         </Link>
       </div>

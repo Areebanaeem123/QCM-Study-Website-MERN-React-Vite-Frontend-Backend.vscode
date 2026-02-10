@@ -2,7 +2,41 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
+class PackStudentOut(BaseModel):
+    student_id: str
+    student_name: Optional[str]
+    purchased_at: datetime
+    gifted: bool
 
+    class Config:
+        from_attributes = True
+
+class PackReviewOut(BaseModel):
+    student_id: str
+    student_name: Optional[str]
+    rating: int
+    comment: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PackOut(BaseModel):
+    id: str
+    university_id: str
+    title: str
+    description: Optional[str]
+    start_at: Optional[datetime]
+    end_at: Optional[datetime]
+    price: Optional[float]
+    currency: Optional[str]
+    created_at: datetime
+    created_by: str
+    students: List[PackStudentOut] = []
+    reviews: List[PackReviewOut] = []
+
+    class Config:
+        from_attributes = True
 # -------------------------
 # MCQs inside a Pack
 # -------------------------
