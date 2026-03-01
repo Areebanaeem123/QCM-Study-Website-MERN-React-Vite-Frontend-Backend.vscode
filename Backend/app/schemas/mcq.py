@@ -55,10 +55,14 @@ class MCQResponse(BaseModel):
     status: str
 
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
 
     created_by: str
-    creator_name: Optional[str]
+    creator_name: Optional[str] = None
+    university_name: Optional[str] = None
+    subject_name: Optional[str] = None
+    lesson_name: Optional[str] = None
+    question_type_name: Optional[str] = None
 
     options: List[MCQOptionResponse]
 

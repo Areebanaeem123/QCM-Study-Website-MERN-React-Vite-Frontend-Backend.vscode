@@ -1,0 +1,264 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   AUTHENTICATION INTEGRATION QUICK REFERENCE               ║
+║                                                                            ║
+║                    Registration & Login - COMPLETE ✅                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🚀 QUICK START (3 STEPS)                                                 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1️⃣  START BACKEND
+   cd Backend
+   pip install -r requirements.txt
+   python init_db.py
+   uvicorn app.main:app --reload --port 8000
+
+2️⃣  START FRONTEND
+   cd Frontend
+   pnpm install
+   pnpm dev
+
+3️⃣  TEST
+   1. Register: http://localhost:3000/inscription
+   2. Login: http://localhost:3000/connexion
+   3. Done! ✅
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📦 FILES CREATED                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+NEW FILES:
+  ✅ Frontend/.env.local
+  ✅ Frontend/lib/api-client.ts
+  ✅ Frontend/lib/auth-service.ts
+  ✅ Frontend/lib/auth-hooks.ts
+  ✅ QuickStart.bat
+
+MODIFIED FILES:
+  ✅ Frontend/app/(auth)/inscription/page.tsx
+  ✅ Frontend/app/(auth)/connexion/login-form.tsx
+
+DOCUMENTATION:
+  ✅ README.md
+  ✅ INTEGRATION_COMPLETE.md
+  ✅ INTEGRATION_GUIDE.md
+  ✅ INTEGRATION_CHECKLIST.md
+  ✅ AUTH_INTEGRATION_SUMMARY.md
+  ✅ ARCHITECTURE_DIAGRAMS.md
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔑 KEY FUNCTIONS                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+AUTHENTICATION:
+  AuthService.register(payload)        → Create account
+  AuthService.login(email, password)   → Login
+  AuthService.getCurrentUser()         → Get user info
+  AuthService.logout()                 → Logout
+  AuthService.isAuthenticated()        → Check auth status
+
+PROTECTED ROUTES:
+  useProtectedRoute()                  → Protect page
+  useRequireAdmin()                    → Admin-only
+  useCurrentUser()                     → Get user data
+  useLogout()                          → Logout action
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔗 API ENDPOINTS                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Base URL: http://localhost:8000/api/v1
+
+  POST /auth/register      → Create account
+  POST /auth/login         → Get tokens
+  GET  /auth/me            → Get user info
+  POST /auth/refresh       → Refresh token (automatic)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 💾 ENVIRONMENT SETUP                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Backend/.env
+─────────────
+DATABASE_URL=postgresql://user:password@localhost:5432/qcm_study_db
+SECRET_KEY=your-secret-key-minimum-32-characters
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+CORS_ORIGINS=http://localhost:3000
+
+Frontend/.env.local (Already created)
+──────────────────────────────────────
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_API_ENDPOINT=http://localhost:8000/api/v1
+NEXT_PUBLIC_JWT_STORAGE_KEY=qcm_study_auth_token
+NEXT_PUBLIC_REFRESH_TOKEN_KEY=qcm_study_refresh_token
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🛡️ SECURITY                                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Password:
+  ✅ Min 8 characters
+  ✅ Bcrypt hashing
+  ✅ Confirmation required
+
+Tokens:
+  ✅ JWT format
+  ✅ Access: 30 minutes
+  ✅ Refresh: 7 days
+  ✅ Auto-refresh on 401
+
+Storage:
+  ✅ localStorage
+  ✅ Secure key names
+  ✅ No sensitive data
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📚 DOCUMENTATION                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+START HERE:
+  1. README.md               → Navigation & overview
+  2. INTEGRATION_COMPLETE.md → What was done
+  3. INTEGRATION_GUIDE.md    → Setup instructions
+
+DETAILED:
+  4. INTEGRATION_CHECKLIST.md    → Testing checklist
+  5. AUTH_INTEGRATION_SUMMARY.md → Feature details
+  6. ARCHITECTURE_DIAGRAMS.md    → Technical diagrams
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 💻 CODE EXAMPLE                                                           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+PROTECT A PAGE:
+───────────────
+"use client"
+import { useProtectedRoute } from "@/lib/auth-hooks"
+
+export default function Dashboard() {
+  const isAuth = useProtectedRoute()
+  if (isAuth === null) return <Loading />
+  return <DashboardContent />
+}
+
+ADMIN ONLY:
+───────────
+"use client"
+import { useRequireAdmin } from "@/lib/auth-hooks"
+
+export default function AdminPage() {
+  const { isAdmin } = useRequireAdmin()
+  if (!isAdmin) return <AccessDenied />
+  return <AdminContent />
+}
+
+GET USER:
+─────────
+"use client"
+import { useCurrentUser } from "@/lib/auth-hooks"
+
+export default function Profile() {
+  const { user } = useCurrentUser()
+  return <div>Welcome {user?.first_name}</div>
+}
+
+LOGOUT:
+───────
+"use client"
+import { useLogout } from "@/lib/auth-hooks"
+
+export default function Navbar() {
+  const logout = useLogout()
+  return <button onClick={logout}>Logout</button>
+}
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ❓ TROUBLESHOOTING                                                        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Backend won't start?
+  → Check PostgreSQL is running
+  → Check DATABASE_URL in .env
+  → Check SECRET_KEY is 32+ chars
+  → Check port 8000 is free
+
+Frontend won't start?
+  → Check Node.js is installed
+  → Run: pnpm install
+  → Check .env.local exists
+  → Check port 3000 is free
+
+Registration fails?
+  → Check backend running on 8000
+  → Check .env.local API endpoint
+  → Check browser console for errors
+
+Login fails?
+  → Check email is registered
+  → Check password is correct
+  → Check backend running
+
+Tokens not saving?
+  → Check localStorage permissions
+  → Try incognito/private mode
+  → Clear cookies and retry
+
+Dashboard not showing?
+  → Check /tableau-de-bord exists
+  → Check /admin-dashboard exists
+  → Check user rank in database
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎯 NEXT STEPS                                                             ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+After registration & login works:
+
+1. Add Navbar Logout Button
+   → Use useLogout() hook
+
+2. Protect Dashboard Pages
+   → Use useProtectedRoute() hook
+
+3. Display Current User
+   → Use useCurrentUser() hook
+
+4. Add Admin Check
+   → Use useRequireAdmin() hook
+
+5. Integrate MCQ Listing
+   → Create API call to /mcqs
+
+6. Integrate Exam Sessions
+   → Create API calls to /session
+
+7. Add Results Display
+   → Show exam performance
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ✅ COMPLETION STATUS                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+[✅] API Client Created
+[✅] Auth Service Implemented
+[✅] Auth Hooks Created
+[✅] Registration Connected
+[✅] Login Connected
+[✅] Token Management
+[✅] Protected Routes
+[✅] Documentation
+[✅] Examples
+
+STATUS: READY FOR TESTING ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                    Created: February 10, 2026
+              Integration Complete | Ready to Test | v1.0.0
+
+                         Good luck! 🚀
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,636 @@
+"use client"
+
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Loader2,
+  Eye,
+  Edit2,
+  Save,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
+import {
+  AdminService,
+  MCQ,
+  MCQsListResponse,
+  University,
+  Subject,
+  Lesson,
+  QuestionType,
+} from "@/lib/admin-service"
+
+const ITEMS_PER_PAGE = 15
+
+type ViewMode = "list" | "preview" | "edit"
+
+export default function ApprovedMCQsPage() {
+  // List states
+  const [approvedMCQsData, setApprovedMCQsData] = useState<MCQsListResponse | null>(null)
+  const [universities, setUniversities] = useState<University[]>([])
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  // Filter states
+  const [filterUniversity, setFilterUniversity] = useState("")
+  const [filterSubject, setFilterSubject] = useState("")
+  const [filterLesson, setFilterLesson] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(0)
+
+  // View mode
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [selectedMCQ, setSelectedMCQ] = useState<MCQ | null>(null)
+
+  // Edit form states
+  const [formTitle, setFormTitle] = useState("")
+  const [formQuestionText, setFormQuestionText] = useState("")
+  const [formOptions, setFormOptions] = useState<any[]>([])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Action states
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Load approved MCQs with filtering and search
+  const loadApprovedMCQs = useCallback(async (page: number = 0) => {
+    try {
+      setIsLoading(true)
+      setError("")
+
+      const data = await AdminService.getApprovedMCQs(
+        filterUniversity || undefined,
+        filterSubject || undefined,
+        filterLesson || undefined,
+        searchTerm || undefined,
+        page * ITEMS_PER_PAGE,
+        ITEMS_PER_PAGE
+      )
+
+      setApprovedMCQsData(data)
+      setCurrentPage(page)
+    } catch (err: any) {
+      setError(err.message || "Failed to load approved MCQs")
+      setApprovedMCQsData(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [filterUniversity, filterSubject, filterLesson, searchTerm])
+
+  // Load static data on mount
+  useEffect(() => {
+    const loadStaticData = async () => {
+      try {
+        const [universitiesData, subjectsData, lessonsData, typesData] =
+          await Promise.all([
+            AdminService.getUniversities(),
+            AdminService.getSubjects(),
+            AdminService.getLessons(),
+            AdminService.getQuestionTypes(),
+          ])
+        setUniversities(universitiesData)
+        setSubjects(subjectsData)
+        setLessons(lessonsData)
+        setQuestionTypes(typesData)
+      } catch (err: any) {
+        setError(err.message || "Failed to load configuration data")
+      }
+    }
+
+    loadStaticData()
+    loadApprovedMCQs(0)
+  }, [loadApprovedMCQs])
+
+  // Filter handlers
+  const handleUniversityChange = (val: string) => {
+    setFilterUniversity(val)
+    setFilterSubject("")
+    setFilterLesson("")
+    setCurrentPage(0)
+  }
+
+  const handleSubjectChange = (val: string) => {
+    setFilterSubject(val)
+    setFilterLesson("")
+    setCurrentPage(0)
+  }
+
+  const handleLessonChange = (val: string) => {
+    setFilterLesson(val)
+    setCurrentPage(0)
+  }
+
+  const handleSearch = (val: string) => {
+    setSearchTerm(val)
+    setCurrentPage(0)
+  }
+
+  // Open preview mode
+  const openPreviewMode = (mcq: MCQ) => {
+    setSelectedMCQ(mcq)
+    setViewMode("preview")
+  }
+
+  // Open edit mode
+  const openEditMode = (mcq: MCQ) => {
+    setSelectedMCQ(mcq)
+    setFormTitle(mcq.title)
+    setFormQuestionText(mcq.question_text)
+    setFormOptions(mcq.options.map((opt) => ({ ...opt })))
+    setViewMode("edit")
+  }
+
+  // Handle save modifications
+  const handleSaveModifications = async () => {
+    if (!selectedMCQ) return
+
+    try {
+      setIsSubmitting(true)
+      setError("")
+
+      await AdminService.updateMCQ(selectedMCQ.id, {
+        title: formTitle,
+        question_text: formQuestionText,
+        options: formOptions,
+      })
+
+      // Reload the list
+      await loadApprovedMCQs(currentPage)
+      setViewMode("list")
+      setSelectedMCQ(null)
+    } catch (err: any) {
+      setError(err.message || "Failed to save modifications")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const getCreatorName = (mcq: MCQ) => {
+    return mcq.creator_name || "Unknown"
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fr-FR")
+  }
+
+  // Filtered subjects based on selected university
+  const filteredSubjects = filterUniversity
+    ? subjects.filter((s) => s.university_id === filterUniversity)
+    : []
+
+  // Filtered lessons based on selected subject
+  const filteredLessons = filterSubject
+    ? lessons.filter((l) => l.subject_id === filterSubject)
+    : []
+
+  const totalPages = approvedMCQsData
+    ? Math.ceil(approvedMCQsData.total / ITEMS_PER_PAGE)
+    : 0
+  const mcqs = approvedMCQsData?.items || []
+
+  // Helper functions
+  const getUniversityName = (id: string) =>
+    universities.find((u) => u.id === id)?.name || id
+  const getSubjectName = (id: string) =>
+    subjects.find((s) => s.id === id)?.name || id
+  const getLessonName = (id: string) =>
+    lessons.find((l) => l.id === id)?.name || id
+  const getQuestionTypeName = (id: string) =>
+    questionTypes.find((t) => t.id === id)?.name || id
+
+  // LIST MODE
+  if (viewMode === "list") {
+    return (
+      <div className="space-y-6">
+        {/* Title */}
+        <div>
+          <h2 className="text-2xl font-bold">QCM Approuvés</h2>
+          <p className="text-muted-foreground">
+            Visualisez et modifiez les QCM approuvés pour la création de packs.
+          </p>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+            <AlertCircle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Filters Section */}
+        <div className="rounded-lg border bg-card p-6">
+          <h3 className="text-lg font-semibold mb-4">Filtres</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {/* University Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Université</label>
+              <Select value={filterUniversity} onValueChange={handleUniversityChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Toutes les universités" />
+                </SelectTrigger>
+                <SelectContent>
+                  {universities.map((uni) => (
+                    <SelectItem key={uni.id} value={uni.id}>
+                      {uni.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subject Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Matière</label>
+              <Select value={filterSubject} onValueChange={handleSubjectChange} disabled={!filterUniversity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Toutes les matières" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSubjects.map((subj) => (
+                    <SelectItem key={subj.id} value={subj.id}>
+                      {subj.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lesson Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Leçon</label>
+              <Select value={filterLesson} onValueChange={handleLessonChange} disabled={!filterSubject}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Toutes les leçons" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredLessons.map((lesson) => (
+                    <SelectItem key={lesson.id} value={lesson.id}>
+                      {lesson.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Rechercher</label>
+              <Input
+                placeholder="Titre ou ID du QCM..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* MCQs Table */}
+        <div className="rounded-lg border bg-card p-6">
+          <h3 className="text-lg font-semibold mb-6">
+            QCM Approuvés ({approvedMCQsData?.total || 0})
+          </h3>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-1/4">Titre</TableHead>
+                      <TableHead className="w-1/5">Leçon</TableHead>
+                      <TableHead className="w-1/5">Créateur</TableHead>
+                      <TableHead className="w-1/5">Créé le</TableHead>
+                      <TableHead className="w-1/4 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mcqs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8">
+                          <p className="text-muted-foreground">
+                            Aucun QCM approuvé trouvé avec les filtres appliqués.
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      mcqs.map((mcq) => (
+                        <TableRow key={mcq.id}>
+                          <TableCell className="font-medium text-sm">
+                            <div>{mcq.title}</div>
+                            <div className="text-xs text-muted-foreground">{mcq.id}</div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {mcq.lesson_name || getLessonName(mcq.lesson_id)}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {getCreatorName(mcq)}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(mcq.created_at)}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openPreviewMode(mcq)}
+                              disabled={isSubmitting}
+                              className="gap-1"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Aperçu
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditMode(mcq)}
+                              disabled={isSubmitting}
+                              className="gap-1"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                              Éditer
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage + 1} sur {totalPages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadApprovedMCQs(currentPage - 1)}
+                      disabled={currentPage === 0 || isLoading}
+                      className="gap-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Précédent
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadApprovedMCQs(currentPage + 1)}
+                      disabled={currentPage >= totalPages - 1 || isLoading}
+                      className="gap-2"
+                    >
+                      Suivant
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // PREVIEW MODE
+  if (viewMode === "preview" && selectedMCQ) {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={() => {
+            setViewMode("list")
+            setSelectedMCQ(null)
+          }}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          ← Retour à la liste
+        </button>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+            <AlertCircle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="rounded-lg border bg-card p-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">{selectedMCQ.title}</h2>
+            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-6">
+              <div>Université: {selectedMCQ.university_name || getUniversityName(selectedMCQ.university_id)}</div>
+              <div>Matière: {selectedMCQ.subject_name || getSubjectName(selectedMCQ.subject_id)}</div>
+              <div>Leçon: {selectedMCQ.lesson_name || getLessonName(selectedMCQ.lesson_id)}</div>
+              <div>Type: {selectedMCQ.question_type_name || getQuestionTypeName(selectedMCQ.question_type_id)}</div>
+              <div>Créé par: {getCreatorName(selectedMCQ)}</div>
+              <div>Date: {formatDate(selectedMCQ.created_at)}</div>
+              <div>ID: {selectedMCQ.id}</div>
+            </div>
+          </div>
+
+          {/* Question Text */}
+          <div className="bg-muted p-4 rounded-lg mb-6">
+            <p className="whitespace-pre-wrap">{selectedMCQ.question_text}</p>
+          </div>
+
+          {/* Options */}
+          <div className="space-y-3 mb-6">
+            {selectedMCQ.options.map((option, idx) => (
+              <div
+                key={option.id}
+                className={`p-3 border rounded-lg ${
+                  option.is_correct ? "bg-green-50 border-green-200" : ""
+                }`}
+              >
+                <div className="flex gap-2">
+                  <div className="mt-1">
+                    <Checkbox checked={option.is_correct} disabled />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{option.option_text}</p>
+                    {option.explanation && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Explication: {option.explanation}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setViewMode("list")
+                setSelectedMCQ(null)
+              }}
+            >
+              Fermer
+            </Button>
+            <Button
+              onClick={() => openEditMode(selectedMCQ)}
+              className="gap-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              Modifier
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // EDIT MODE
+  if (viewMode === "edit" && selectedMCQ) {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={() => {
+            setViewMode("list")
+            setSelectedMCQ(null)
+          }}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          ← Retour à la liste
+        </button>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+            <AlertCircle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="rounded-lg border bg-card p-6">
+          <h3 className="text-lg font-semibold mb-6">Modifier le QCM</h3>
+
+          <div className="space-y-4">
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Titre</label>
+              <Input
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+              />
+            </div>
+
+            {/* Question Text */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Texte de la question
+              </label>
+              <Textarea
+                ref={textareaRef}
+                value={formQuestionText}
+                onChange={(e) => setFormQuestionText(e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+
+            {/* Options */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Options</label>
+              <div className="space-y-3">
+                {formOptions.map((option, idx) => (
+                  <div key={option.id} className="border rounded-lg p-3">
+                    <div className="flex gap-2 mb-2">
+                      <Checkbox
+                        checked={option.is_correct}
+                        onCheckedChange={(checked) => {
+                          const updated = [...formOptions]
+                          updated[idx].is_correct = checked
+                          setFormOptions(updated)
+                        }}
+                      />
+                      <span className="text-sm font-medium">Correcte</span>
+                    </div>
+                    <Input
+                      className="mb-2"
+                      value={option.option_text}
+                      onChange={(e) => {
+                        const updated = [...formOptions]
+                        updated[idx].option_text = e.target.value
+                        setFormOptions(updated)
+                      }}
+                      placeholder="Texte de l'option"
+                    />
+                    <Textarea
+                      value={option.explanation || ""}
+                      onChange={(e) => {
+                        const updated = [...formOptions]
+                        updated[idx].explanation = e.target.value
+                        setFormOptions(updated)
+                      }}
+                      placeholder="Explication (optionnel)"
+                      className="text-sm min-h-16"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 justify-between mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setViewMode("list")
+                setSelectedMCQ(null)
+              }}
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleSaveModifications} disabled={isSubmitting} className="gap-2">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Enregistrer les modifications
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+}

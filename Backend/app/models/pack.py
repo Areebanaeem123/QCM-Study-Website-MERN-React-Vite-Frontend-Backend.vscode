@@ -46,6 +46,6 @@ class Pack(Base):
     university = relationship("University")
     creator = relationship("User")
     mcqs = relationship("PackMCQ", back_populates="pack", cascade="all, delete-orphan")
-    sessions = relationship("Session", back_populates="pack", cascade="all, delete-orphan")
+    session_items = relationship("SessionItem", back_populates="pack", cascade="all, delete-orphan")
     purchases = relationship("PackPurchase", back_populates="pack")
     reviews = relationship("PackReview", back_populates="pack")

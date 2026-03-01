@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Date
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, Date, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -27,8 +27,9 @@ class User(Base):
     email_verified = Column(DateTime, nullable=True)
     accepted_terms = Column(Boolean, default=False)
     is_robot_verified = Column(Boolean, default=False)
+    is_blocked = Column(Boolean, default=False)  # Admin can block users
     # Roles
-    rank = Column(Integer, default=1)  # 1 = student, 6 = admin
+    rank = Column(Integer, default=1, index=True)  # 1 = student, 6 = admin
     # Meta
     registration_ip = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

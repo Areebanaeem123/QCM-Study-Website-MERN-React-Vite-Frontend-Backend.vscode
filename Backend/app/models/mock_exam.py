@@ -11,6 +11,7 @@ class MockExam(Base):
     university_id = Column(String, ForeignKey("universities.id", ondelete="CASCADE"))
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)  # mock exam image
     available_from = Column(DateTime, nullable=True)
     available_until = Column(DateTime, nullable=True)
     time_limit_minutes = Column(Integer, nullable=True)  # None = unlimited
@@ -24,7 +25,7 @@ class MockExam(Base):
     created_by = Column(String, ForeignKey("users.id"))
 
     # Relationships
-    mcqs = relationship("MCQ", secondary="mock_exam_mcqs", backref="mock_exams")
     questions = relationship("MCQ",secondary=mock_exam_mcqs,back_populates="mock_exams")
+    session_items = relationship("SessionItem", back_populates="mock_exam")
     purchases = relationship("MockExamPurchase", back_populates="mock_exam", cascade="all, delete")
     reviews = relationship("MockExamReview", back_populates="mock_exam", cascade="all, delete")

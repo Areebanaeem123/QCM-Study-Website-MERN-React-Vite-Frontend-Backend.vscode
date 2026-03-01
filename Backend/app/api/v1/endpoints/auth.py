@@ -139,64 +139,73 @@ async def register(
 
 @router.post("/login", response_model=Token)
 async def login(
-    request: Request,
-    email: str | None = None,
-    password: str | None = None,
+    credentials: LoginRequest,
     db: Session = Depends(get_db)
 ):
     """
     Login and get access and refresh tokens.
-
-    Supports:
-    1. JSON body: {"email": "...", "password": "..."} (frontend)
-    2. Form data: username & password (Swagger OAuth2)
-    """
-
-    # Detect JSON body
-    if request.headers.get("content-type", "").startswith("application/json"):
-        body = await request.json()
-        email = body.get("email")
-        password = body.get("password")
     
-    # Detect form data (Swagger OAuth2PasswordBearer)
-    elif request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
-        # 'username' is used by Swagger OAuth2
-        form = await request.form()
-        email = form.get("username")
-        password = form.get("password")
+    Accepts JSON: {"email": "user@example.com", "password": "password123"}
+    """
+    try:
+        email = credentials.email
+        password = credentials.password
+        
+        print(f"[LOGIN] Attempting login for email: {email}")
 
-    # Validate presence
-    if not email or not password:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Email and password are required"
+        # Validate presence
+        if not email or not password:
+            print(f"[LOGIN] Missing credentials - email: {bool(email)}, password: {bool(password)}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Email and password are required"
+            )
+
+        # Authenticate
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            print(f"[LOGIN] User not found: {email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+        
+        if not verify_password(password, user.password):
+            print(f"[LOGIN] Password verification failed for: {email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+
+        print(f"[LOGIN] Authentication successful for: {email}")
+
+        # Create tokens
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.id, "email": user.email, "rank": user.rank},
+            expires_delta=access_token_expires
+        )
+        refresh_token = create_refresh_token(
+            data={"sub": user.id, "email": user.email, "rank": user.rank}
         )
 
-    # Authenticate
-    user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.password):
+        print(f"[LOGIN] Tokens created successfully for: {email}")
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[LOGIN] Unexpected error: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login error: {str(e)}"
         )
-
-    # Create tokens
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.id, "email": user.email, "rank": user.rank},
-        expires_delta=access_token_expires
-    )
-    refresh_token = create_refresh_token(
-        data={"sub": user.id, "email": user.email, "rank": user.rank}
-    )
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
-
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(

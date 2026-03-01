@@ -4,14 +4,19 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, User, Package, Play, Trophy, ClipboardCheck, Book, Search, MessageSquare, BarChart2, Clock, FileText, ImageIcon, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, User, Package, Play, Trophy, ClipboardCheck, Book, Search, MessageSquare, BarChart2, Clock, FileText, ImageIcon, LogOut, Menu, X, Building2, BookOpen, GraduationCap, Layers, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const sidebarLinks = [
-  { href: "/admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin-dashboard/users", label: "Users", icon: User },
+  { href: "/admin-dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/admin-dashboard/users", label: "Utilisateurs", icon: User },
+  { href: "/admin-dashboard/universities", label: "Universités", icon: Building2 },
+  { href: "/admin-dashboard/subjects", label: "Sujets", icon: BookOpen },
+  { href: "/admin-dashboard/lessons", label: "Leçons", icon: GraduationCap },
+  { href: "/admin-dashboard/question-types", label: "Types de Questions", icon: Layers },
   { href: "/admin-dashboard/mcqs", label: "MCQs", icon: ClipboardCheck },
   { href: "/admin-dashboard/mcq-approvals", label: "MCQ Approvals", icon: Play },
+  { href: "/admin-dashboard/approved-mcqs", label: "QCM Approuvés", icon: Eye },
   { href: "/admin-dashboard/packs", label: "Packs", icon: Package },
   { href: "/admin-dashboard/mock-exams", label: "Mock Exams", icon: Play },
   { href: "/admin-dashboard/question-banks", label: "Question Banks", icon: Book },

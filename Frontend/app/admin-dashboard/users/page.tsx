@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,23 +12,172 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search } from "lucide-react"
+import { Search, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { AdminService, User } from "@/lib/admin-service"
+
+const ROLE_NAMES: Record<number, string> = {
+  1: "Student",
+  2: "Writer",
+  3: "Content Manager",
+  6: "Admin",
+}
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState("")
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [error, setError] = useState("")
 
-  // Dummy data (replace with API later)
-  const users = [
-    { id: "U001", name: "Alice Martin", email: "alice@mail.com", role: "Student", packs: 3, status: "Active" },
-    { id: "U002", name: "John Doe", email: "john@mail.com", role: "Writer", packs: 1, status: "Active" },
-    { id: "U003", name: "Emma Clark", email: "emma@mail.com", role: "Student", packs: 0, status: "Blocked" },
-  ]
+  // Dialog states
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false)
+  const [packDialogOpen, setPackDialogOpen] = useState(false)
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string>("")
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  
+  // Pack state
+  const [packs, setPacks] = useState<any[]>([])
+  const [selectedPackId, setSelectedPackId] = useState<string>("")
+  const [isLoadingPacks, setIsLoadingPacks] = useState(false)
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.id.toLowerCase().includes(search.toLowerCase()),
-  )
+  const ITEMS_PER_PAGE = 20
+
+  // Fetch users
+  useEffect(() => {
+    loadUsers()
+  }, [search, currentPage])
+
+  // Load packs when pack dialog opens
+  useEffect(() => {
+    if (packDialogOpen) {
+      loadPacks()
+    }
+  }, [packDialogOpen])
+
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true)
+      setError("")
+      const response = await AdminService.getUsers(
+        search,
+        currentPage * ITEMS_PER_PAGE,
+        ITEMS_PER_PAGE
+      )
+      setUsers(response.items)
+      setTotalUsers(response.total)
+    } catch (err: any) {
+      setError(err.message || "Failed to load users")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadPacks = async () => {
+    try {
+      setIsLoadingPacks(true)
+      const data = await AdminService.getPacks()
+      setPacks(data)
+    } catch (err: any) {
+      setError(err.message || "Failed to load packs")
+    } finally {
+      setIsLoadingPacks(false)
+    }
+  }
+
+  // Handle role change
+  const handleChangeRole = async () => {
+    if (!selectedUser || !selectedRole) return
+
+    try {
+      setIsActionLoading(true)
+      await AdminService.changeUserRole(selectedUser.id, parseInt(selectedRole))
+      setUsers(
+        users.map((u) =>
+          u.id === selectedUser.id
+            ? { ...u, role: parseInt(selectedRole), role_name: ROLE_NAMES[parseInt(selectedRole)] }
+            : u
+        )
+      )
+      setRoleDialogOpen(false)
+      setSelectedUser(null)
+      setSelectedRole("")
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
+  // Handle block/unblock
+  const handleChangeStatus = async (isBlocking: boolean) => {
+    if (!selectedUser) return
+
+    try {
+      setIsActionLoading(true)
+      await AdminService.changeUserStatus(selectedUser.id, isBlocking)
+      setUsers(
+        users.map((u) =>
+          u.id === selectedUser.id ? { ...u, is_blocked: isBlocking } : u
+        )
+      )
+      setStatusDialogOpen(false)
+      setSelectedUser(null)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
+  const handlePrintPackMessage = () => {
+    // TODO: Implement grant pack functionality
+    // For now, show message that this requires pack selection
+    alert("Pack granting feature - select a pack to grant to this user")
+  }
+
+  const handleGrantPack = async () => {
+    if (!selectedUser || !selectedPackId) return
+
+    try {
+      setIsActionLoading(true)
+      await AdminService.grantPackToUser(selectedUser.id, selectedPackId)
+      
+      // Update user packs count
+      setUsers(
+        users.map((u) =>
+          u.id === selectedUser.id ? { ...u, packs: u.packs + 1 } : u
+        )
+      )
+      
+      setPackDialogOpen(false)
+      setSelectedUser(null)
+      setSelectedPackId("")
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
+  const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE)
 
   return (
     <div className="space-y-6">
@@ -40,58 +189,304 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 text-red-800 p-4 rounded-lg">{error}</div>
+      )}
+
       {/* Search Bar */}
       <div className="flex items-center gap-3 max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Rechercher par nom ou ID..."
+            placeholder="Rechercher par nom ou email..."
             className="pl-9"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setCurrentPage(0)
+            }}
           />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="rounded-lg border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rôle</TableHead>
-              <TableHead>Packs Achevés</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{user.role}</Badge>
-                </TableCell>
-                <TableCell>{user.packs}</TableCell>
-                <TableCell>
-                  <Badge variant={user.status === "Active" ? "default" : "destructive"}>
-                    {user.status === "Active" ? "Actif" : "Bloqué"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button size="sm" variant="outline">Changer le Rôle</Button>
-                  <Button size="sm" variant="outline">Offrir un Pack</Button>
-                  <Button size="sm" variant="destructive">Bloquer</Button>
-                </TableCell>
+      <div className="rounded-lg border bg-background overflow-x-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Rôle</TableHead>
+                <TableHead>Packs</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="text-sm">{user.id.slice(0, 8)}...</TableCell>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{user.role_name}</Badge>
+                  </TableCell>
+                  <TableCell>{user.packs}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        user.is_blocked ? "destructive" : "default"
+                      }
+                    >
+                      {user.is_blocked ? "Bloqué" : "Actif"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedUser(user)
+                        setSelectedRole(user.role.toString())
+                        setRoleDialogOpen(true)
+                      }}
+                    >
+                      Rôle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedUser(user)
+                        setPackDialogOpen(true)
+                      }}
+                    >
+                      Pack
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={
+                        user.is_blocked ? "default" : "destructive"
+                      }
+                      onClick={() => {
+                        setSelectedUser(user)
+                        setStatusDialogOpen(true)
+                      }}
+                    >
+                      {user.is_blocked ? "Débloquer" : "Bloquer"}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
+
+      {/* Pagination */}
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Affichage {currentPage * ITEMS_PER_PAGE + 1}-
+            {Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalUsers)} sur{" "}
+            {totalUsers}
+          </p>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+            >
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages - 1}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Suivant
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Change Role Dialog */}
+      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le rôle de l'utilisateur</DialogTitle>
+            <DialogDescription>
+              Sélectionnez le nouveau rôle pour {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionner un rôle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Student</SelectItem>
+              <SelectItem value="2">Writer</SelectItem>
+              <SelectItem value="3">Content Manager</SelectItem>
+              <SelectItem value="6">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRoleDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleChangeRole}
+              disabled={isActionLoading || !selectedRole}
+            >
+              {isActionLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Mise à jour...
+                </>
+              ) : (
+                "Confirmer"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Offer Pack Dialog */}
+      <Dialog open={packDialogOpen} onOpenChange={setPackDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Offrir un Pack</DialogTitle>
+            <DialogDescription>
+              Offrir l'accès à un pack pour {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {isLoadingPacks ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : packs.length > 0 ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Sélectionner un pack</label>
+                  <Select value={selectedPackId} onValueChange={setSelectedPackId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un pack..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {packs.map((pack) => (
+                        <SelectItem key={pack.id} value={pack.id}>
+                          {pack.name} ({pack.price} {pack.currency})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedPackId && packs.find(p => p.id === selectedPackId) && (
+                  <div className="bg-muted p-3 rounded text-sm">
+                    <p><strong>Description:</strong> {packs.find(p => p.id === selectedPackId)?.description || "N/A"}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun pack disponible</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPackDialogOpen(false)
+                setSelectedPackId("")
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => handleGrantPack()}
+              disabled={!selectedPackId || isActionLoading}
+            >
+              {isActionLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Offrir...
+                </>
+              ) : (
+                "Offrir le Pack"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block/Unblock Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedUser?.is_blocked ? "Débloquer" : "Bloquer"} utilisateur
+            </DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir{" "}
+              {selectedUser?.is_blocked ? "débloquer" : "bloquer"}{" "}
+              {selectedUser?.name} ?
+            </DialogDescription>
+          </DialogHeader>
+
+          <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded">
+            {selectedUser?.is_blocked
+              ? "Cet utilisateur pourra se reconnecter et accéder à la plateforme."
+              : "Cet utilisateur ne pourra plus accéder à la plateforme."}
+          </p>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setStatusDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant={selectedUser?.is_blocked ? "default" : "destructive"}
+              onClick={() =>
+                handleChangeStatus(!selectedUser?.is_blocked || false)
+              }
+              disabled={isActionLoading}
+            >
+              {isActionLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Mise à jour...
+                </>
+              ) : selectedUser?.is_blocked ? (
+                "Débloquer"
+              ) : (
+                "Bloquer"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

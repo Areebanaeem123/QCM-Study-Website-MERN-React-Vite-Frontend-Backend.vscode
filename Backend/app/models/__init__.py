@@ -16,6 +16,7 @@ from app.models.mock_exam_purchase import MockExamPurchase
 from app.models.mock_exam_review import MockExamReview
 from app.models.question_bank_mcq import question_bank_mcqs
 from app.models.question_bank_purchase import QuestionBankPurchase
+from app.models.question_bank_review import QuestionBankReview
 from app.models.question_bank import QuestionBank
 from app.models.pack_purchase import PackPurchase
 from app.models.pack_review import PackReview
@@ -39,6 +40,7 @@ __all__ = ["User",
 "MockExamReview",
 "question_bank_mcqs",
 "QuestionBankPurchase",
+"QuestionBankReview",
 "QuestionBank",
 "PackPurchase",
 "PackReview",

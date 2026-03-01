@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { AuthService } from "@/lib/auth-service"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -41,19 +42,41 @@ export default function LoginForm() {
 
     setIsLoading(true)
 
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      // Call backend login endpoint
+      const response = await AuthService.login({
+        email: formData.email,
+        password: formData.password,
+      })
 
-      // ✅ Simple frontend "authentication" check
-      if (
-        formData.email === "Admin@gmail.com" &&
-        formData.password === "Admin1234"
-      ) {
-        router.push("/admin-dashboard") // redirect to admin dashboard
+      // Extract user rank from JWT token without additional API call
+      // The access token contains rank in its payload
+      const token = response.access_token
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const userRank = payload.rank
+
+      // Redirect based on user role
+      if (userRank === 6) {
+        // Admin user
+        router.push("/admin-dashboard")
       } else {
-        router.push("/tableau-de-bord") // redirect to student dashboard
+        // Student user
+        router.push("/tableau-de-bord")
       }
-    }, 1500)
+    } catch (error: any) {
+      console.error("Login error:", error)
+      if (error instanceof Error) {
+        setErrors({
+          general: error.message || "Email ou mot de passe incorrect",
+        })
+      } else {
+        setErrors({
+          general: "Email ou mot de passe incorrect",
+        })
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

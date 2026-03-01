@@ -1,29 +1,52 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Package, Brain, Activity } from "lucide-react"
+import { Users, Package, Brain, Activity, AlertCircle } from "lucide-react"
+import { DashboardService, type DashboardStats } from "@/lib/dashboard-service"
 
 export default function AdminDashboardPage() {
-  // Later these come from API
-  const stats = [
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await DashboardService.getStats()
+        setStats(data)
+      } catch (err: any) {
+        setError(err.message || "Erreur lors du chargement des statistiques")
+        console.error("Dashboard stats error:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  const statCards = [
     {
       title: "Total des Étudiants",
-      value: "1,284",
+      value: stats?.total_students ?? 0,
       icon: Users,
     },
     {
       title: "Packs Vendus",
-      value: "3,912",
+      value: stats?.total_packs_sold ?? 0,
       icon: Package,
     },
     {
       title: "QCM Créés",
-      value: "12,450",
+      value: stats?.total_mcqs_created ?? 0,
       icon: Brain,
     },
     {
       title: "Sessions Actives",
-      value: "87",
+      value: stats?.active_sessions ?? 0,
       icon: Activity,
     },
   ]
@@ -38,9 +61,22 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex items-center gap-3 pt-6">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <div>
+              <p className="font-medium text-red-900">Erreur de chargement</p>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -49,7 +85,11 @@ export default function AdminDashboardPage() {
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              {isLoading ? (
+                <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
+              ) : (
+                <div className="text-2xl font-bold">{stat.value.toLocaleString()}</div>
+              )}
             </CardContent>
           </Card>
         ))}

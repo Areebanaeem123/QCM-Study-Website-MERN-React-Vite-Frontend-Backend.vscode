@@ -134,10 +134,27 @@ export default function SignUpPage() {
     setErrors({})
 
     try {
-      const fullName = `${formData.firstName} ${formData.lastName}`.trim()
-      //const { register } = await import("@/lib/auth-fastapi")
+      const { AuthService } = await import("@/lib/auth-service")
       
-      //await register(fullName, formData.email, formData.password, 1)
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        civility: formData.civility,
+        date_of_birth: formData.dateOfBirth,
+        address: formData.address,
+        country: formData.country,
+        phone_number: formData.phone,
+        diploma: formData.diploma,
+        former_school: formData.formerSchool,
+        university: formData.university,
+        accepted_terms: formData.acceptTerms,
+        is_robot_verified: captchaVerified,
+      }
+      
+      await AuthService.register(payload)
       
       // Registration successful
       router.push("/inscription/confirmation")

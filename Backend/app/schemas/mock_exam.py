@@ -24,6 +24,7 @@ class MockExamOut(BaseModel):
     id: str
     title: str
     description: Optional[str]
+    image_url: Optional[str]
     university_id: str
     created_at: datetime
     total_questions: int

@@ -1,0 +1,594 @@
+# 🔗 Integration Architecture & Diagrams
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     CLIENT (Next.js Frontend)               │
+│                    http://localhost:3000                    │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Pages                                             │    │
+│  │  ├─ /inscription (Registration)                  │    │
+│  │  ├─ /connexion (Login)                           │    │
+│  │  ├─ /tableau-de-bord (Student Dashboard)         │    │
+│  │  └─ /admin-dashboard (Admin Dashboard)           │    │
+│  └────────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Services                                          │    │
+│  │  ├─ AuthService (register, login, logout)         │    │
+│  │  └─ ApiClient (HTTP + Token Management)           │    │
+│  └────────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  localStorage                                      │    │
+│  │  ├─ qcm_study_auth_token                          │    │
+│  │  └─ qcm_study_refresh_token                       │    │
+│  └────────────────────────────────────────────────────┘    │
+└──────────────────┬──────────────────────────────────────────┘
+                   │ HTTPS/CORS
+                   │
+┌──────────────────▼──────────────────────────────────────────┐
+│                  SERVER (FastAPI Backend)                   │
+│              http://localhost:8000/api/v1                  │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Endpoints                                         │    │
+│  │  ├─ POST /auth/register                           │    │
+│  │  ├─ POST /auth/login                              │    │
+│  │  ├─ GET  /auth/me                                 │    │
+│  │  └─ POST /auth/refresh                            │    │
+│  └────────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Services                                          │    │
+│  │  ├─ Security (JWT, Bcrypt)                        │    │
+│  │  ├─ Database (SQLAlchemy)                         │    │
+│  │  └─ Validation (Pydantic)                         │    │
+│  └────────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Database (PostgreSQL)                             │    │
+│  │  └─ users table                                   │    │
+│  └────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Registration Flow Diagram
+
+```
+User Interface (Next.js)
+      │
+      ▼
+┌──────────────────────┐
+│ Registration Form    │
+│ (3-step wizard)      │
+└──────┬───────────────┘
+       │ User fills form
+       ▼
+┌──────────────────────┐
+│ Client Validation    │
+│ ✓ Email format      │
+│ ✓ Password length   │
+│ ✓ Required fields   │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────┐
+│ POST /api/v1/auth/register              │
+│ Body: {                                  │
+│   email: string                          │
+│   password: string                       │
+│   confirm_password: string               │
+│   first_name: string                     │
+│   last_name: string                      │
+│   ...other fields...                     │
+│ }                                        │
+└──────┬───────────────────────────────────┘
+       │ Backend Processing
+       ▼
+┌──────────────────────┐
+│ Validation           │
+│ ✓ Email unique      │
+│ ✓ Password strength │
+│ ✓ Terms accepted    │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ Bcrypt Hash Password │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ Save User to DB      │
+│ (PostgreSQL)         │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ Response 201 Created {               │
+│   id: UUID                           │
+│   email: string                      │
+│   access_token: JWT                  │
+│   refresh_token: JWT                 │
+│   rank: 1 (student)                  │
+│ }                                    │
+└──────┬───────────────────────────────┘
+       │ Frontend Receives
+       ▼
+┌──────────────────────────────────────┐
+│ Store Tokens in localStorage         │
+│ ├─ qcm_study_auth_token             │
+│ └─ qcm_study_refresh_token          │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ Redirect to          │
+│ /inscription/        │
+│ confirmation         │
+└──────────────────────┘
+```
+
+---
+
+## Login Flow Diagram
+
+```
+User Interface (Next.js)
+      │
+      ▼
+┌──────────────────────┐
+│ Login Form           │
+│ (email + password)   │
+└──────┬───────────────┘
+       │ User submits
+       ▼
+┌──────────────────────┐
+│ Client Validation    │
+│ ✓ Email format      │
+│ ✓ Required fields   │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────┐
+│ POST /api/v1/auth/login                 │
+│ Content-Type: application/x-www-form-   │
+│ urlencoded                               │
+│ Body: username=email&password=password   │
+└──────┬───────────────────────────────────┘
+       │ Backend Processing
+       ▼
+┌──────────────────────┐
+│ Find User by Email   │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ Verify Password      │
+│ (Bcrypt compare)     │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ Create JWT Tokens                    │
+│ ├─ access_token (30 min)             │
+│ └─ refresh_token (7 days)            │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ Response 200 OK {                    │
+│   access_token: JWT                  │
+│   refresh_token: JWT                 │
+│   token_type: "bearer"               │
+│ }                                    │
+└──────┬───────────────────────────────┘
+       │ Frontend Receives
+       ▼
+┌──────────────────────────────────────┐
+│ Store Tokens in localStorage         │
+│ ├─ qcm_study_auth_token             │
+│ └─ qcm_study_refresh_token          │
+└──────┬───────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ GET /api/v1/auth/me                  │
+│ Header: Authorization: Bearer <token>│
+└──────┬───────────────────────────────┘
+       │ Backend Returns User
+       ▼
+┌──────────────────────────────────────┐
+│ Response 200 OK {                    │
+│   id: UUID                           │
+│   email: string                      │
+│   first_name: string                 │
+│   rank: 1 or 6                       │
+│ }                                    │
+└──────┬───────────────────────────────┘
+       │ Check User Rank
+       ▼
+        ┌─────────────┬────────────────┐
+        │             │                │
+    rank=6         rank=1              │
+        │             │                │
+        ▼             ▼                │
+   /admin-      /tableau-de-           │
+   dashboard    bord                   │
+```
+
+---
+
+## Token Management Flow
+
+```
+┌────────────────────────────────┐
+│ User Authenticates             │
+│ (Register/Login)               │
+└────────────┬────────────────────┘
+             │
+             ▼
+    ┌─────────────────┐
+    │ Receive Tokens  │
+    │ • access_token  │
+    │ • refresh_token │
+    └────────┬────────┘
+             │
+             ▼
+    ┌──────────────────────────────┐
+    │ Store in localStorage        │
+    │ for persistence across       │
+    │ browser sessions             │
+    └────────┬─────────────────────┘
+             │
+             ▼
+    ┌──────────────────────────────┐
+    │ Next Request                 │
+    │ (API call)                   │
+    └────────┬─────────────────────┘
+             │
+             ▼
+    ┌──────────────────────────────────┐
+    │ ApiClient injects access_token   │
+    │ in Authorization header          │
+    │                                  │
+    │ Authorization: Bearer <token>    │
+    └────────┬───────────────────────┘
+             │
+             ▼
+        ┌─────────────┐
+        │ Server      │
+        │ validates   │
+        │ token       │
+        └──┬──────┬───┘
+           │      │
+      Valid│      │Invalid/Expired
+           │      │
+           ▼      ▼
+        ┌──┐  ┌────────────────────────┐
+        │✓ │  │ Return 401 Unauthorized│
+        └──┘  └────────┬───────────────┘
+           Continue       │
+                          ▼
+                   ┌─────────────────────┐
+                   │ ApiClient detects   │
+                   │ 401 response        │
+                   └────────┬────────────┘
+                            │
+                            ▼
+                   ┌─────────────────────┐
+                   │ POST /auth/refresh  │
+                   │ with refresh_token  │
+                   └────────┬────────────┘
+                            │
+                            ▼
+                   ┌────────────────────────┐
+                   │ Server validates       │
+                   │ refresh token          │
+                   └──┬────────────────┬────┘
+                      │                │
+                   Valid           Expired
+                      │                │
+                      ▼                ▼
+               ┌──────────────┐  ┌─────────────────┐
+               │Return new    │  │Clear all tokens │
+               │access_token  │  │Redirect to      │
+               │              │  │login page       │
+               │Retry original│  │                 │
+               │request with  │  └─────────────────┘
+               │new token     │
+               └──────────────┘
+```
+
+---
+
+## API Request Headers & Response
+
+### Registration Request
+```http
+POST /api/v1/auth/register HTTP/1.1
+Host: localhost:8000
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "password": "SecurePass123!",
+  "confirm_password": "SecurePass123!",
+  "first_name": "Jean",
+  "last_name": "Dupont",
+  "civility": "M.",
+  "date_of_birth": "2000-01-15",
+  "address": "123 Rue de la Paix",
+  "country": "France",
+  "phone_number": "+33612345678",
+  "diploma": "L2 Médecine",
+  "former_school": "Lycée Victor Hugo",
+  "university": "Université Paris Descartes",
+  "accepted_terms": true,
+  "is_robot_verified": true
+}
+```
+
+### Registration Response
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "student@example.com",
+  "first_name": "Jean",
+  "last_name": "Dupont",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "rank": 1
+}
+```
+
+### Login Request
+```http
+POST /api/v1/auth/login HTTP/1.1
+Host: localhost:8000
+Content-Type: application/x-www-form-urlencoded
+
+username=student@example.com&password=SecurePass123!
+```
+
+### Login Response
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+### Get Current User Request
+```http
+GET /api/v1/auth/me HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Get Current User Response
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "student@example.com",
+  "first_name": "Jean",
+  "last_name": "Dupont",
+  "rank": 1,
+  "email_verified": null,
+  "created_at": "2026-02-10T10:30:00Z"
+}
+```
+
+---
+
+## Data Model
+
+### User Table (PostgreSQL)
+```sql
+CREATE TABLE users (
+  id VARCHAR PRIMARY KEY,
+  -- Identity
+  civility VARCHAR,
+  first_name VARCHAR,
+  last_name VARCHAR,
+  date_of_birth DATE,
+  -- Contact
+  address VARCHAR,
+  country VARCHAR,
+  phone_number VARCHAR,
+  -- Education
+  diploma VARCHAR,
+  former_school VARCHAR,
+  university VARCHAR,
+  -- Auth
+  email VARCHAR UNIQUE NOT NULL,
+  password VARCHAR NOT NULL,  -- Bcrypt hashed
+  -- Verification
+  email_verified TIMESTAMP,
+  accepted_terms BOOLEAN DEFAULT FALSE,
+  is_robot_verified BOOLEAN DEFAULT FALSE,
+  -- Authorization
+  rank INTEGER DEFAULT 1,  -- 1=student, 6=admin
+  -- Metadata
+  registration_ip VARCHAR,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+)
+```
+
+---
+
+## Component Hierarchy
+
+```
+Frontend App
+│
+├─ Layout
+│  ├─ Header/Navbar
+│  ├─ Main Content
+│  └─ Footer
+│
+├─ Auth Routes
+│  ├─ /inscription
+│  │  ├─ RegistrationForm (3-step)
+│  │  │  ├─ Step 1: PersonalInfo
+│  │  │  ├─ Step 2: EducationInfo
+│  │  │  └─ Step 3: AccountCreation
+│  │  └─ Confirmation Page
+│  │
+│  └─ /connexion
+│     └─ LoginForm
+│        ├─ EmailInput
+│        ├─ PasswordInput
+│        ├─ RememberMe
+│        └─ ForgotPassword
+│
+├─ Dashboard Routes
+│  ├─ /tableau-de-bord (Student)
+│  │  ├─ ProgressTracker
+│  │  ├─ QuestionBank
+│  │  └─ ExamList
+│  │
+│  └─ /admin-dashboard (Admin)
+│     ├─ Statistics
+│     ├─ UserManagement
+│     └─ MCQApproval
+│
+└─ Services
+   ├─ AuthService
+   │  ├─ register()
+   │  ├─ login()
+   │  ├─ getCurrentUser()
+   │  └─ logout()
+   │
+   └─ ApiClient
+      ├─ request()
+      ├─ get()
+      ├─ post()
+      ├─ tokenManagement
+      └─ errorHandling
+```
+
+---
+
+## State Management
+
+```
+Frontend State
+
+├─ AuthState (localStorage)
+│  ├─ qcm_study_auth_token
+│  │  ├─ sub (user_id)
+│  │  ├─ exp (expiration)
+│  │  └─ type: "access"
+│  │
+│  └─ qcm_study_refresh_token
+│     ├─ sub (user_id)
+│     ├─ exp (expiration)
+│     └─ type: "refresh"
+│
+└─ UserState (in-memory)
+   ├─ id
+   ├─ email
+   ├─ first_name
+   ├─ last_name
+   ├─ rank (1 or 6)
+   └─ created_at
+```
+
+---
+
+## Error Handling Flow
+
+```
+API Request
+  │
+  ▼
+┌──────────────────────┐
+│ Response received    │
+└──┬────────────────┬──┘
+   │                │
+   ▼                ▼
+ 200 OK        Error Response
+   │           (4xx/5xx)
+   │                │
+   ▼                ▼
+Return Data    ┌──────────────────┐
+           Normalize Error
+           ├─ Status Code
+           ├─ Message
+           └─ Detail
+                 │
+                 ▼
+            ┌────────────┐
+            │ Check if   │
+            │ 401        │
+            └──┬─────┬───┘
+               │     │
+              Yes    No
+               │     │
+               ▼     ▼
+           Refresh   Show
+           Token     Error
+               │     Message
+               ▼
+           Success?
+            │  │
+           Yes No
+            │  │
+            ▼  ▼
+          Retry Clear
+          Request Tokens
+                  │
+                  ▼
+              Redirect
+              to Login
+```
+
+---
+
+## Performance Considerations
+
+```
+┌─────────────────────────────────────┐
+│ Optimization Strategies             │
+├─────────────────────────────────────┤
+│ 1. Token Caching                    │
+│    • Store tokens in localStorage   │
+│    • Reuse across requests          │
+│    • No re-fetch on page refresh    │
+│                                     │
+│ 2. Automatic Token Refresh          │
+│    • No manual token management     │
+│    • Transparent to user            │
+│    • Single request retry on 401    │
+│                                     │
+│ 3. Form Validation                  │
+│    • Client-side before API call    │
+│    • Reduces unnecessary requests   │
+│    • Better UX with instant feedback│
+│                                     │
+│ 4. Error Recovery                   │
+│    • Automatic token refresh        │
+│    • Graceful error messages        │
+│    • User-friendly notifications    │
+│                                     │
+│ 5. CORS Optimization                │
+│    • Single origin configured       │
+│    • Credentials included           │
+│    • Pre-flight requests minimized  │
+└─────────────────────────────────────┘
+```
+
+---
+
+This architecture provides a secure, efficient, and scalable authentication system for your medical exam platform! 🚀

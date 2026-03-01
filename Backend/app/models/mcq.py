@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -18,7 +18,7 @@ class MCQ(Base):
     question_text = Column(Text, nullable=False)
 
     # draft / pending / approved / rejected
-    status = Column(String, default="draft")
+    status = Column(String, default="draft", index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -27,6 +27,10 @@ class MCQ(Base):
     creator_name = Column(String, nullable=True)
 
     # Relationships
+    university = relationship("University")
+    subject = relationship("Subject")
+    lesson = relationship("Lesson")
+    question_type = relationship("QuestionType")
     options = relationship("MCQOption", back_populates="mcq", cascade="all, delete-orphan")
     approvals = relationship("MCQApproval", back_populates="mcq", cascade="all, delete-orphan")
     mock_exams = relationship("MockExam",secondary=mock_exam_mcqs, back_populates="questions")
