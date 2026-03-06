@@ -294,6 +294,62 @@ export interface PacksListResponse {
   items: PackResponse[]
 }
 
+export interface QuestionBankResponse {
+  id: string
+  title: string
+  description?: string
+  price: number
+  currency: "CHF" | "GBP" | "USD"
+  start_datetime: string
+  expiry_datetime: string
+  display_before_start: boolean
+  is_published: boolean
+  university_id: string
+  university_name?: string
+  image_url?: string
+  created_by: string
+  creator_name?: string
+  created_at: string
+  updated_at?: string
+  mcqs?: MCQ[]
+  student_count?: number
+  review_count?: number
+  average_rating?: number | null
+}
+
+export interface CreateQuestionBankRequest {
+  title: string
+  description?: string
+  price: number
+  currency: "CHF" | "GBP" | "USD"
+  start_datetime: string
+  expiry_datetime: string
+  display_before_start: boolean
+  is_published: boolean
+  university_id: string
+  image_url?: string
+  mcq_ids: string[]
+}
+
+export interface UpdateQuestionBankRequest {
+  title?: string
+  description?: string
+  price?: number
+  currency?: "CHF" | "GBP" | "USD"
+  start_datetime?: string
+  expiry_datetime?: string
+  display_before_start?: boolean
+  is_published?: boolean
+  mcq_ids?: string[]
+}
+
+export interface QuestionBanksListResponse {
+  total: number
+  skip: number
+  limit: number
+  items: QuestionBankResponse[]
+}
+
 export class AdminService {
   /**
    * Get list of users with search and pagination
@@ -854,8 +910,14 @@ export class AdminService {
       console.log("[Admin Service] Creating pack with data:", data)
       return await ApiClient.post<PackResponse>(`/admin/packs`, data)
     } catch (error: any) {
-      console.error("[Admin Service] Failed to create pack:", error)
-      throw new Error(error.message || "Failed to create pack")
+      const errorMessage = error?.message || error?.detail || "Failed to create pack"
+      const errorDetails = {
+        message: errorMessage,
+        status: error?.status,
+        fullError: error instanceof Error ? error.message : String(error),
+      }
+      console.error("[Admin Service] Failed to create pack:", errorDetails)
+      throw new Error(errorMessage)
     }
   }
 
@@ -956,6 +1018,101 @@ export class AdminService {
       )
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete mock exam")
+    }
+  }
+
+  /**
+   * Get list of question banks with pagination and filtering
+   */
+  static async getQuestionBanks(
+    universityId?: string,
+    search?: string,
+    skip: number = 0,
+    limit: number = 20
+  ): Promise<QuestionBanksListResponse> {
+    try {
+      const params = new URLSearchParams()
+      if (universityId) params.append("university_id", universityId)
+      if (search) params.append("search", search)
+      params.append("skip", skip.toString())
+      params.append("limit", limit.toString())
+
+      return await ApiClient.get<QuestionBanksListResponse>(
+        `/admin/question-banks?${params.toString()}`
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch question banks")
+    }
+  }
+
+  /**
+   * Get single question bank details
+   */
+  static async getQuestionBankDetails(
+    bankId: string
+  ): Promise<QuestionBankResponse> {
+    try {
+      return await ApiClient.get<QuestionBankResponse>(
+        `/admin/question-banks/${bankId}`
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch question bank details")
+    }
+  }
+
+  /**
+   * Create a new question bank
+   */
+  static async createQuestionBank(
+    data: CreateQuestionBankRequest
+  ): Promise<QuestionBankResponse> {
+    try {
+      console.log("[Admin Service] Creating question bank with data:", data)
+      return await ApiClient.post<QuestionBankResponse>(
+        `/admin/question-banks`,
+        data
+      )
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.detail || "Failed to create question bank"
+      const errorDetails = {
+        message: errorMessage,
+        status: error?.status,
+        fullError: error instanceof Error ? error.message : String(error),
+      }
+      console.error("[Admin Service] Failed to create question bank:", errorDetails)
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
+   * Update an existing question bank
+   */
+  static async updateQuestionBank(
+    bankId: string,
+    data: UpdateQuestionBankRequest
+  ): Promise<QuestionBankResponse> {
+    try {
+      return await ApiClient.put<QuestionBankResponse>(
+        `/admin/question-banks/${bankId}`,
+        data
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update question bank")
+    }
+  }
+
+  /**
+   * Delete a question bank
+   */
+  static async deleteQuestionBank(
+    bankId: string
+  ): Promise<{ message: string }> {
+    try {
+      return await ApiClient.delete<{ message: string }>(
+        `/admin/question-banks/${bankId}`
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to delete question bank")
     }
   }
 }
