@@ -14,6 +14,8 @@ export interface User {
   packs: number
   is_blocked: boolean
   created_at: string
+  university?: string
+  academic_year?: string
 }
 
 export interface UsersListResponse {
@@ -23,11 +25,24 @@ export interface UsersListResponse {
   items: User[]
 }
 
+export interface PurchasedItem {
+  purchase_id: string
+  pack_id: string
+  title: string
+  type: string
+  gifted: boolean
+  purchase_date: string
+}
+
 export interface UserDetail extends User {
   civility?: string
   date_of_birth?: string
   country?: string
   phone_number?: string
+  address?: string
+  last_login?: string
+  registration_ip?: string
+  purchased_items?: PurchasedItem[]
 }
 
 export interface GrantPackResponse {
@@ -82,6 +97,18 @@ export interface CreateUniversityRequest {
 export interface UpdateUniversityRequest {
   name?: string
   is_displayed?: boolean
+}
+
+export interface AdminFeedback {
+  review_id: string
+  student_id: string
+  student_name: string
+  item_id: string
+  item_title: string
+  rating: number
+  comment: string
+  created_at: string
+  type: "Pack" | "Examen Blanc"
 }
 
 export interface Subject {
@@ -203,11 +230,53 @@ export interface UpdateMCQRequest {
   options?: MCQOption[]
 }
 
+export interface DashboardStats {
+  total_students: number
+  total_packs_sold: number
+  total_mcqs_created: number
+  active_sessions: number
+  total_online_users: number
+  sales_over_time: { date: string; count: number }[]
+}
+
+export interface StudentRanking {
+  name: string
+  email: string
+  score: number
+  rank: number
+}
+
 export interface MCQsListResponse {
   total: number
   skip: number
   limit: number
   items: MCQ[]
+}
+
+export interface Activity {
+  id: string
+  user_name: string
+  type: string
+  timestamp: string
+}
+
+export interface PageOut {
+  id: number
+  title: string
+  slug: string
+  content: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface SliderOut {
+  id: number
+  title: string
+  subtitle?: string
+  image_url: string
+  button_text?: string
+  button_link?: string
+  is_active: boolean
 }
 
 export interface MCQApprovalResponse {
@@ -221,6 +290,28 @@ export interface MCQApprovalResponse {
 
 export interface MCQWithApprovalsResponse extends MCQ {
   approvals: MCQApprovalResponse[]
+}
+
+export interface PackResponse {
+  id: string
+  university_id: string
+  type: string
+  title: string
+  description?: string
+  price: number
+  currency: string
+  start_datetime: datetime | string
+  expiry_datetime: datetime | string
+  display_before_start: boolean
+  time_limit_minutes?: number
+  is_published: boolean
+  created_at: string
+  creator_name?: string
+}
+
+export interface PacksListResponse {
+  items: PackResponse[]
+  total: number
 }
 
 export interface PendingMCQsListResponse {
@@ -254,7 +345,25 @@ export interface PackResponse {
   creator_name?: string
   created_at: string
   updated_at?: string
+  sales_count?: number
+  average_rating?: number
   mcqs?: MCQ[]
+}
+
+export interface PackPurchaser {
+  student_id: string
+  first_name: string
+  last_name: string
+  email: string
+  purchased_at: string
+  gifted: boolean
+}
+
+export interface PackReview {
+  student_name: string
+  rating: number
+  comment?: string
+  created_at: string
 }
 
 export interface CreatePackRequest {
@@ -356,12 +465,14 @@ export class AdminService {
    */
   static async getUsers(
     search: string = "",
+    sortBy: string = "alphabetical",
     skip: number = 0,
     limit: number = 20
   ): Promise<UsersListResponse> {
     try {
       const params = new URLSearchParams()
       if (search) params.append("search", search)
+      params.append("sort_by", sortBy)
       params.append("skip", skip.toString())
       params.append("limit", limit.toString())
 
@@ -411,11 +522,43 @@ export class AdminService {
   ): Promise<GrantPackResponse> {
     try {
       return await ApiClient.post<GrantPackResponse>(
-        `/admin/users/${userId}/grant-pack/${packId}`,
-        {}
+        `/admin/users/${userId}/grant-pack/${packId}`
       )
     } catch (error: any) {
       throw new Error(error.message || "Failed to grant pack access")
+    }
+  }
+
+  /**
+   * Revoke pack access from user
+   */
+  static async revokePackFromUser(
+    userId: string,
+    packId: string
+  ): Promise<void> {
+    try {
+      await ApiClient.delete(
+        `/admin/users/${userId}/revoke-pack/${packId}`
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to revoke pack access")
+    }
+  }
+
+  /**
+   * Email all students
+   */
+  static async emailAllStudents(
+    subject: string,
+    body: string
+  ): Promise<{ message: string }> {
+    try {
+      return await ApiClient.post<{ message: string }>(
+        `/admin/users/email-all`,
+        { subject, body }
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to dispatch emails")
     }
   }
 
@@ -768,7 +911,7 @@ export class AdminService {
    */
   static async deleteMCQ(mcqId: string): Promise<void> {
     try {
-      await ApiClient.delete(`/admin/mcqs/${mcqId}`)
+      await ApiClient.delete(`/mcqs/${mcqId}`)
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete MCQ")
     }
@@ -947,6 +1090,43 @@ export class AdminService {
   }
 
   /**
+   * Get list of students who purchased or were gifted a pack
+   */
+  static async getPackPurchasers(packId: string): Promise<PackPurchaser[]> {
+    try {
+      return await ApiClient.get<PackPurchaser[]>(`/admin/packs/${packId}/purchasers`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch pack purchasers")
+    }
+  }
+
+  /**
+   * Get detailed evaluations for a pack
+   */
+  static async getPackReviews(packId: string): Promise<PackReview[]> {
+    try {
+      return await ApiClient.get<PackReview[]>(`/admin/packs/${packId}/reviews`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch pack reviews")
+    }
+  }
+
+  /**
+   * Search MCQs by keyword or ID (rank 5,6 only)
+   */
+  static async searchMCQs(keyword?: string, mcqId?: string): Promise<MCQ[]> {
+    try {
+      const params = new URLSearchParams()
+      if (keyword) params.append("keyword", keyword)
+      if (mcqId) params.append("mcq_id", mcqId)
+      
+      return await ApiClient.get<MCQ[]>(`/mcq_research?${params.toString()}`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to search MCQs")
+    }
+  }
+
+  /**
    * Get list of mock exams with pagination and filtering
    */
   static async getMockExams(
@@ -1113,6 +1293,178 @@ export class AdminService {
       )
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete question bank")
+    }
+  }
+
+  /**
+   * Search MCQs by keyword or ID (Requires rank >= 5)
+   */
+  static async searchMCQs(
+    keyword?: string,
+    mcqId?: string
+  ): Promise<MCQ[]> {
+    try {
+      const params = new URLSearchParams()
+      if (keyword) params.append("keyword", keyword)
+      if (mcqId) params.append("mcq_id", mcqId)
+
+      return await ApiClient.get<MCQ[]>(
+        `/mcq_research?${params.toString()}`
+      )
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to search MCQs")
+    }
+  }
+
+  /**
+   * Get all pack feedback
+   */
+  static async getPackFeedback(): Promise<AdminFeedback[]> {
+    try {
+      const response = await ApiClient.get<any[]>("/feedback/packs")
+      return response.map(r => ({
+        review_id: r.review_id,
+        student_id: r.student_id,
+        student_name: r.student_name,
+        item_id: r.pack_id,
+        item_title: r.item_title,
+        rating: r.rating,
+        comment: r.comment,
+        created_at: r.created_at,
+        type: "Pack"
+      }))
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch pack feedback")
+    }
+  }
+
+  /**
+   * Get all mock exam feedback
+   */
+  static async getMockExamFeedback(): Promise<AdminFeedback[]> {
+    try {
+      const response = await ApiClient.get<any[]>("/feedback/mock-exams")
+      return response.map(r => ({
+        review_id: r.review_id,
+        student_id: r.student_id,
+        student_name: r.student_name,
+        item_id: r.mock_exam_id,
+        item_title: r.item_title,
+        rating: r.rating,
+        comment: r.comment,
+        created_at: r.created_at,
+        type: "Examen Blanc"
+      }))
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch mock exam feedback")
+    }
+  }
+
+  /**
+   * Get student rankings
+   */
+  static async getRankings(packId?: string): Promise<StudentRanking[]> {
+    try {
+      const params = new URLSearchParams()
+      if (packId) params.append("pack_id", packId)
+      return await ApiClient.get<StudentRanking[]>(`/dashboard/rankings?${params.toString()}`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch rankings")
+    }
+  }
+
+  /**
+   * Get recent activity
+   */
+  static async getRecentActivity(): Promise<Activity[]> {
+    try {
+      return await ApiClient.get<Activity[]>("/dashboard/recent-activity")
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch recent activity")
+    }
+  }
+
+  /**
+   * CMS Pages
+   */
+  static async getPages(): Promise<PageOut[]> {
+    try {
+      return await ApiClient.get<PageOut[]>("/pages/")
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch pages")
+    }
+  }
+
+  static async createPage(data: { title: string; slug: string; content: string }): Promise<PageOut> {
+    try {
+      return await ApiClient.post<PageOut>("/pages/", data)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create page")
+    }
+  }
+
+  static async updatePage(slug: string, data: { title?: string; content?: string }): Promise<PageOut> {
+    try {
+      return await ApiClient.put<PageOut>(`/pages/${slug}`, data)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update page")
+    }
+  }
+
+  /**
+   * Sliders
+   */
+  static async getSliders(): Promise<SliderOut[]> {
+    try {
+      return await ApiClient.get<SliderOut[]>("/slider/")
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch sliders")
+    }
+  }
+
+  static async createSlider(data: any): Promise<SliderOut> {
+    try {
+      return await ApiClient.post<SliderOut>("/slider/", data)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create slider")
+    }
+  }
+
+  static async updateSlider(id: number, data: any): Promise<SliderOut> {
+    try {
+      return await ApiClient.put<SliderOut>(`/slider/${id}`, data)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update slider")
+    }
+  }
+
+  /**
+   * Dashboard Statistics
+   */
+  static async getDashboardStats(): Promise<DashboardStats> {
+    try {
+      return await ApiClient.get<DashboardStats>("/dashboard/stats")
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch dashboard stats")
+    }
+  }
+
+  /**
+   * Get all packs
+   */
+  static async getPacks(): Promise<PackResponse[]> {
+    try {
+      return await ApiClient.get<PackResponse[]>("/visualize_packs/")
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch packs")
+    }
+  }
+
+  static async deleteSlider(id: number): Promise<void> {
+    try {
+      await ApiClient.delete(`/slider/${id}`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to delete slider")
     }
   }
 }

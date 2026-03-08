@@ -3,7 +3,7 @@
  * Handles authentication tokens, request/response interception, and error handling
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_ENDPOINT || "http://localhost:8000/api/v1"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_ENDPOINT || "http://127.0.0.1:8000/api/v1"
 
 interface ApiResponse<T> {
   data?: T
@@ -46,12 +46,17 @@ export class ApiClient {
       }
     }
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000)
+
     try {
       console.log(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body })
       const response = await fetch(url, {
         ...options,
         headers,
+        signal: controller.signal
       })
+      clearTimeout(timeoutId)
 
       // Handle unauthorized - but NOT for public endpoints (they have real 401 errors to show)
       if (response.status === 401) {
@@ -235,6 +240,8 @@ export class ApiClient {
   }
 
   private static async refreshAccessToken(refreshToken: string): Promise<string | null> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000)
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: "POST",
@@ -242,7 +249,9 @@ export class ApiClient {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ refresh_token: refreshToken }),
+        signal: controller.signal
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         return null

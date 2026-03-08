@@ -26,14 +26,15 @@ class PackOut(BaseModel):
     university_id: str
     title: str
     description: Optional[str]
-    start_at: Optional[datetime]
-    end_at: Optional[datetime]
-    price: Optional[float]
-    currency: Optional[str]
+    start_datetime: datetime
+    expiry_datetime: datetime
+    display_before_start: bool
+    price: float
+    currency: str
+    is_published: bool
     created_at: datetime
     created_by: str
-    students: List[PackStudentOut] = []
-    reviews: List[PackReviewOut] = []
+    creator_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -103,16 +104,15 @@ class PackResponse(BaseModel):
     id: str
     university_id: str
     type: str
-
     title: str
     description: Optional[str]
-
     price: float
     currency: str
+    start_datetime: datetime
+    expiry_datetime: datetime
+    display_before_start: bool
     time_limit_minutes: Optional[int]
-    is_visible_before_start: bool
-
-    status: str
+    is_published: bool
     created_at: datetime
     creator_name: Optional[str]
 

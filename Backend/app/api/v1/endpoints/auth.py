@@ -66,6 +66,15 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
+def require_pack_creator(current_user: User = Depends(get_current_user)) -> User:
+    """Require rank 5 (MCQ Packer) or rank 6 (Admin) to access."""
+    if current_user.rank < 5:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Pack creator or Admin access required"
+        )
+    return current_user
+
 from fastapi import Request
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -178,6 +187,12 @@ async def login(
             )
 
         print(f"[LOGIN] Authentication successful for: {email}")
+
+        # Update last login timestamp
+        from datetime import datetime
+        user.last_login = datetime.utcnow()
+        db.commit()
+        print(f"[LOGIN] Database commit completed for {email}")
 
         # Create tokens
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

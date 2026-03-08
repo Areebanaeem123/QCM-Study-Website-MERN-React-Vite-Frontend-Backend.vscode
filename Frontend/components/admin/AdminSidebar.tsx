@@ -20,6 +20,7 @@ const sidebarLinks = [
   { href: "/admin-dashboard/packs", label: "Packs", icon: Package },
   { href: "/admin-dashboard/mock-exams", label: "Mock Exams", icon: Play },
   { href: "/admin-dashboard/question-banks", label: "Question Banks", icon: Book },
+  { href: "/admin-dashboard/sessions", label: "Sessions", icon: Clock },
   { href: "/admin-dashboard/research", label: "Research", icon: Search },
   { href: "/admin-dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/admin-dashboard/statistics", label: "Statistics", icon: BarChart2 },

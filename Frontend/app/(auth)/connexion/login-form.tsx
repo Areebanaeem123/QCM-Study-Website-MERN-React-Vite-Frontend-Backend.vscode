@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { AuthService } from "@/lib/auth-service"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginForm() {
+  const { toast } = useToast()
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -49,22 +51,52 @@ export default function LoginForm() {
         password: formData.password,
       })
 
-      // Extract user rank from JWT token without additional API call
-      // The access token contains rank in its payload
-      const token = response.access_token
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const userRank = payload.rank
+      try {
+        // Extract user rank from JWT token without additional API call
+        const token = response.access_token
+        
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
 
-      // Redirect based on user role
-      if (userRank === 6) {
-        // Admin user
-        router.push("/admin-dashboard")
-      } else {
-        // Student user
+        const payload = JSON.parse(jsonPayload)
+        const userRank = payload.rank
+
+        // Set loading to false before navigation to improve perceived snappiness
+        setIsLoading(false)
+
+        // Redirect based on user role
+        if (userRank === 6) {
+          toast({
+            title: "Connexion réussie",
+            description: "Chargement de l'administration...",
+          })
+          router.push("/admin-dashboard")
+        } else {
+          toast({
+            title: "Connexion réussie",
+            description: "Chargement du tableau de bord...",
+          })
+          router.push("/tableau-de-bord")
+        }
+      } catch (tokenError) {
+        console.error("Token parsing error:", tokenError)
+        setIsLoading(false)
+        toast({
+          title: "Connexion réussie",
+        })
         router.push("/tableau-de-bord")
       }
     } catch (error: any) {
       console.error("Login error:", error)
+      setIsLoading(false)
+      toast({
+        variant: "destructive",
+        title: "Échec de la connexion",
+        description: error instanceof Error ? error.message : "Email ou mot de passe incorrect",
+      })
       if (error instanceof Error) {
         setErrors({
           general: error.message || "Email ou mot de passe incorrect",
@@ -74,8 +106,6 @@ export default function LoginForm() {
           general: "Email ou mot de passe incorrect",
         })
       }
-    } finally {
-      setIsLoading(false)
     }
   }
 

@@ -6,7 +6,7 @@ from datetime import datetime
 class SessionItemCreate(BaseModel):
     pack_id: Optional[str] = None
     mock_exam_id: Optional[str] = None
-    # future: question_bank_id: Optional[str] = None
+    question_bank_id: Optional[str] = None
 
 
 class SessionCreate(BaseModel):
@@ -20,6 +20,7 @@ class SessionItemResponse(BaseModel):
     id: str
     pack_id: Optional[str] = None
     mock_exam_id: Optional[str] = None
+    question_bank_id: Optional[str] = None
 
     class Config:
         from_attributes = True

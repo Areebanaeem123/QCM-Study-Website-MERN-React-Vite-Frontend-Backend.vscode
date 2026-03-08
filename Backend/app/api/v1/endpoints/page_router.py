@@ -49,3 +49,8 @@ def get_page(slug: str, db: Session = Depends(get_db)):
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
     return page
+
+
+@router.get("/", response_model=list[PageOut])
+def list_pages(db: Session = Depends(get_db)):
+    return db.query(Page).all()

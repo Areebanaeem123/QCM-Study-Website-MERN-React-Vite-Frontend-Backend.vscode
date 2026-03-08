@@ -20,9 +20,12 @@ class User(Base):
     diploma = Column(String, nullable=True)
     former_school = Column(String, nullable=True)
     university = Column(String, nullable=True)
+    academic_year = Column(String, nullable=True)
+
     # Auth
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    last_login = Column(DateTime, nullable=True)
     # Verification & flags
     email_verified = Column(DateTime, nullable=True)
     accepted_terms = Column(Boolean, default=False)

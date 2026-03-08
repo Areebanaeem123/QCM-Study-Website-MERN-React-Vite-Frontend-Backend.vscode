@@ -12,7 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, Loader2 } from "lucide-react"
+import { Search, Loader2, Mail, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,13 @@ export default function AdminUsersPage() {
   const [totalUsers, setTotalUsers] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
   const [error, setError] = useState("")
+  const [sortBy, setSortBy] = useState("alphabetical")
+
+  // Email Dialog states
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [emailSubject, setEmailSubject] = useState("")
+  const [emailBody, setEmailBody] = useState("")
+  const [isEmailLoading, setIsEmailLoading] = useState(false)
 
   // Dialog states
   const [roleDialogOpen, setRoleDialogOpen] = useState(false)
@@ -63,7 +71,7 @@ export default function AdminUsersPage() {
   // Fetch users
   useEffect(() => {
     loadUsers()
-  }, [search, currentPage])
+  }, [search, sortBy, currentPage])
 
   // Load packs when pack dialog opens
   useEffect(() => {
@@ -78,6 +86,7 @@ export default function AdminUsersPage() {
       setError("")
       const response = await AdminService.getUsers(
         search,
+        sortBy,
         currentPage * ITEMS_PER_PAGE,
         ITEMS_PER_PAGE
       )
@@ -94,7 +103,8 @@ export default function AdminUsersPage() {
     try {
       setIsLoadingPacks(true)
       const data = await AdminService.getPacks()
-      setPacks(data)
+      // Handle the case where AdminService.getPacks returns a paginated object
+      setPacks(Array.isArray(data) ? data : (data as any).items || [])
     } catch (err: any) {
       setError(err.message || "Failed to load packs")
     } finally {
@@ -177,6 +187,22 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleSendMassEmail = async () => {
+    if (!emailSubject || !emailBody) return
+    try {
+      setIsEmailLoading(true)
+      await AdminService.emailAllStudents(emailSubject, emailBody)
+      setEmailDialogOpen(false)
+      setEmailSubject("")
+      setEmailBody("")
+      alert("Email envoyé avec succès à tous les étudiants!")
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsEmailLoading(false)
+    }
+  }
+
   const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE)
 
   return (
@@ -194,20 +220,37 @@ export default function AdminUsersPage() {
         <div className="bg-red-100 text-red-800 p-4 rounded-lg">{error}</div>
       )}
 
-      {/* Search Bar */}
-      <div className="flex items-center gap-3 max-w-md">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher par nom ou email..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setCurrentPage(0)
-            }}
-          />
+      {/* Search Bar & Actions */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-3 w-full max-w-2xl">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom ou email..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setCurrentPage(0)
+              }}
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(val) => { setSortBy(val); setCurrentPage(0) }}>
+             <SelectTrigger className="w-[180px]">
+               <SelectValue placeholder="Trier par" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="alphabetical">Alphabétique</SelectItem>
+               <SelectItem value="university">Université</SelectItem>
+               <SelectItem value="academic_year">Année Académique</SelectItem>
+             </SelectContent>
+           </Select>
         </div>
+        
+        <Button onClick={() => setEmailDialogOpen(true)} className="w-full sm:w-auto self-start sm:self-auto">
+          <Mail className="w-4 h-4 mr-2" />
+          Emailer tous les étudiants
+        </Button>
       </div>
 
       {/* Users Table */}
@@ -227,6 +270,8 @@ export default function AdminUsersPage() {
                 <TableHead>ID</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Université</TableHead>
+                <TableHead>Année Ac.</TableHead>
                 <TableHead>Rôle</TableHead>
                 <TableHead>Packs</TableHead>
                 <TableHead>Statut</TableHead>
@@ -239,6 +284,8 @@ export default function AdminUsersPage() {
                   <TableCell className="text-sm">{user.id.slice(0, 8)}...</TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.university || "-"}</TableCell>
+                  <TableCell>{user.academic_year || "-"}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{user.role_name}</Badge>
                   </TableCell>
@@ -253,6 +300,12 @@ export default function AdminUsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
+                    <Link href={`/admin-dashboard/users/${user.id}`}>
+                      <Button size="sm" variant="secondary">
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Détails
+                      </Button>
+                    </Link>
                     <Button
                       size="sm"
                       variant="outline"
@@ -482,6 +535,59 @@ export default function AdminUsersPage() {
                 "Débloquer"
               ) : (
                 "Bloquer"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Email All Students Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Emailer Tous Les Étudiants</DialogTitle>
+            <DialogDescription>
+              Envoyez un e-mail groupé à tous les étudiants inscrits sur la plateforme.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sujet de l'e-mail</label>
+              <Input
+                placeholder="Ex: Mise à jour importante"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <textarea
+                className="flex min-h-[150px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Votre message ici..."
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEmailDialogOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSendMassEmail}
+              disabled={isEmailLoading || !emailSubject || !emailBody}
+            >
+              {isEmailLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                "Envoyer l'e-mail"
               )}
             </Button>
           </DialogFooter>

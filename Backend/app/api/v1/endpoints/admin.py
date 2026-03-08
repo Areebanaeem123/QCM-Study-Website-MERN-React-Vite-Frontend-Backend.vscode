@@ -15,7 +15,7 @@ from app.models.pack_purchase import PackPurchase
 from app.models.question_bank import QuestionBank
 from app.models.question_bank_purchase import QuestionBankPurchase
 from app.models.question_bank_review import QuestionBankReview
-from app.api.v1.endpoints.auth import get_current_user, require_admin
+from app.api.v1.endpoints.auth import get_current_user, require_admin, require_pack_creator
 from app.schemas.university import UniversityCreate, UniversityUpdate, UniversityResponse
 from app.schemas.subject import SubjectCreate, SubjectUpdate, SubjectResponse
 from app.schemas.lesson import LessonCreate, LessonUpdate, LessonResponse
@@ -34,6 +34,10 @@ class ChangeStatusRequest(BaseModel):
 
 class GrantPackRequest(BaseModel):
     pack_id: str
+
+class EmailAllStudentsRequest(BaseModel):
+    subject: str
+    body: str
 
 # Admin Pack Management
 class AdminPackCreate(BaseModel):
@@ -154,13 +158,14 @@ router = APIRouter()
 @router.get("/users")
 async def list_users(
     search: str = "",
+    sort_by: str = "alphabetical",  # alphabetical, university, academic_year
     skip: int = 0,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get list of users with optional search.
+    Get list of users with optional search and sorting.
     Requires admin access.
     """
     require_admin(current_user)
@@ -173,6 +178,13 @@ async def list_users(
             (User.first_name.ilike(f"%{search}%")) |
             (User.last_name.ilike(f"%{search}%"))
         )
+        
+    if sort_by == "university":
+        query = query.order_by(User.university.asc())
+    elif sort_by == "academic_year":
+        query = query.order_by(User.academic_year.asc())
+    else:
+        query = query.order_by(User.first_name.asc(), User.last_name.asc())
     
     total = query.count()
     users = query.offset(skip).limit(limit).all()
@@ -190,7 +202,9 @@ async def list_users(
             "role_name": get_role_name(user.rank),
             "packs": pack_count,
             "is_blocked": user.is_blocked if hasattr(user, 'is_blocked') else False,
-            "created_at": user.created_at.isoformat() if user.created_at else None
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "university": user.university,
+            "academic_year": user.academic_year
         })
     
     return {
@@ -214,7 +228,22 @@ async def get_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    pack_count = db.query(PackPurchase).filter(PackPurchase.student_id == user.id).count()
+    pack_purchases = db.query(PackPurchase).filter(PackPurchase.student_id == user.id).all()
+    
+    # We add detailed purchase listing for the details page
+    purchased_items = []
+    for p in pack_purchases:
+        if p.pack:
+            purchased_items.append({
+                "purchase_id": p.id,
+                "pack_id": p.pack_id,
+                "title": p.pack.title,
+                "type": p.pack.type,
+                "gifted": p.gifted,
+                "purchase_date": p.purchased_at.isoformat() if p.purchased_at else None
+            })
+            
+    pack_count = len(pack_purchases)
     
     return {
         "id": user.id,
@@ -223,12 +252,18 @@ async def get_user(
         "role": user.rank,
         "role_name": get_role_name(user.rank),
         "packs": pack_count,
+        "purchased_items": purchased_items,
         "is_blocked": user.is_blocked if hasattr(user, 'is_blocked') else False,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "civility": user.civility,
         "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+        "address": user.address,
         "country": user.country,
-        "phone_number": user.phone_number
+        "phone_number": user.phone_number,
+        "university": user.university,
+        "academic_year": user.academic_year,
+        "last_login": user.last_login.isoformat() if hasattr(user, 'last_login') and user.last_login else None,
+        "registration_ip": user.registration_ip
     }
 
 
@@ -268,7 +303,6 @@ async def change_user_role(
 async def grant_pack_to_user(
     user_id: str,
     pack_id: str,
-    request: GrantPackRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -279,14 +313,14 @@ async def grant_pack_to_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    pack = db.query(Pack).filter(Pack.id == request.pack_id).first()
+    pack = db.query(Pack).filter(Pack.id == pack_id).first()
     if not pack:
         raise HTTPException(status_code=404, detail="Pack not found")
-    
+        
     # Check if user already has access
     existing = db.query(PackPurchase).filter(
         PackPurchase.student_id == user_id,
-        PackPurchase.pack_id == request.pack_id
+        PackPurchase.pack_id == pack_id
     ).first()
     
     if existing:
@@ -295,7 +329,7 @@ async def grant_pack_to_user(
     # Create purchase record for admin gift
     purchase = PackPurchase(
         student_id=user_id,
-        pack_id=request.pack_id,
+        pack_id=pack_id,
         gifted=True
     )
     
@@ -308,6 +342,59 @@ async def grant_pack_to_user(
         "user_id": user_id,
         "pack_id": pack_id,
         "message": f"Pack '{pack.name}' granted to user"
+    }
+
+
+@router.delete("/users/{user_id}/revoke-pack/{pack_id}")
+async def revoke_pack_from_user(
+    user_id: str,
+    pack_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Revoke pack access from user."""
+    require_admin(current_user)
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    purchase = db.query(PackPurchase).filter(
+        PackPurchase.student_id == user_id,
+        PackPurchase.pack_id == pack_id
+    ).first()
+    
+    if not purchase:
+        raise HTTPException(status_code=404, detail="Purchase record not found for this user and pack")
+        
+    db.delete(purchase)
+    db.commit()
+    
+    return {"message": "Pack access revoked successfully"}
+
+
+@router.post("/users/email-all")
+async def email_all_students(
+    request: EmailAllStudentsRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mock endpoint to send an email to every student.
+    In a real system, this would queue jobs for an SMTP worker.
+    """
+    require_admin(current_user)
+    
+    # Get all students (rank = 1)
+    students = db.query(User).filter(User.rank == 1).all()
+    count = len(students)
+    
+    print(f"[ADMIN_EMAIL] Dispatching email to {count} students.")
+    print(f"[ADMIN_EMAIL] Subject: {request.subject}")
+    print(f"[ADMIN_EMAIL] Body Preview: {request.body[:100]}...")
+    
+    return {
+        "message": f"Successfully queued email for {count} students."
     }
 
 
@@ -352,12 +439,10 @@ async def list_packs_admin(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 20,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_pack_creator),
     db: Session = Depends(get_db)
 ):
-    """List all packs with optional filters (admin only)."""
-    require_admin(current_user)
-    
+    """List all packs with optional filters (admin and pack creators)."""
     query = db.query(Pack)
     
     if pack_type:
@@ -372,7 +457,7 @@ async def list_packs_admin(
     total = query.count()
     packs = query.order_by(Pack.created_at.desc()).offset(skip).limit(limit).all()
     
-    # Format pack data with MCQs
+    # Format pack data with MCQs and metrics
     items = []
     for pack in packs:
         mcq_data = [
@@ -383,6 +468,14 @@ async def list_packs_admin(
             }
             for pack_mcq in pack.mcqs
         ]
+        
+        # Calculate sales count
+        sales_count = db.query(PackPurchase).filter(PackPurchase.pack_id == pack.id).count()
+        
+        # Calculate average rating
+        from app.models.pack_review import PackReview
+        avg_rating_row = db.query(func.avg(PackReview.rating)).filter(PackReview.pack_id == pack.id).first()
+        avg_rating = float(avg_rating_row[0]) if avg_rating_row and avg_rating_row[0] else 0.0
         
         items.append({
             "id": pack.id,
@@ -402,6 +495,8 @@ async def list_packs_admin(
             "created_at": pack.created_at.isoformat() if pack.created_at else None,
             "created_by": pack.created_by,
             "creator_name": pack.creator_name,
+            "sales_count": sales_count,
+            "average_rating": round(avg_rating, 1),
             "mcqs": mcq_data
         })
     
@@ -411,6 +506,53 @@ async def list_packs_admin(
         "limit": limit,
         "items": items
     }
+
+@router.get("/packs/{pack_id}/purchasers")
+async def get_pack_purchasers(
+    pack_id: str,
+    current_user: User = Depends(require_pack_creator),
+    db: Session = Depends(get_db)
+):
+    """Get list of students who purchased or were gifted a pack."""
+    pack = db.query(Pack).filter(Pack.id == pack_id).first()
+    if not pack:
+        raise HTTPException(status_code=404, detail="Pack not found")
+    
+    purchases = db.query(PackPurchase).filter(PackPurchase.pack_id == pack_id).all()
+    
+    result = []
+    for p in purchases:
+        result.append({
+            "student_id": p.student.id,
+            "first_name": p.student.first_name,
+            "last_name": p.student.last_name,
+            "email": p.student.email,
+            "purchased_at": p.purchased_at.isoformat(),
+            "gifted": p.gifted
+        })
+    
+    return result
+
+@router.get("/packs/{pack_id}/reviews")
+async def get_pack_reviews(
+    pack_id: str,
+    current_user: User = Depends(require_pack_creator),
+    db: Session = Depends(get_db)
+):
+    """Get detailed evaluations for a pack."""
+    from app.models.pack_review import PackReview
+    reviews = db.query(PackReview).filter(PackReview.pack_id == pack_id).all()
+    
+    result = []
+    for r in reviews:
+        result.append({
+            "student_name": f"{r.student.first_name} {r.student.last_name}",
+            "rating": r.rating,
+            "comment": r.comment,
+            "created_at": r.created_at.isoformat()
+        })
+    
+    return result
 
 
 @router.post("/packs", response_model=AdminPackResponse, status_code=status.HTTP_201_CREATED)

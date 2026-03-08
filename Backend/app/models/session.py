@@ -28,8 +28,9 @@ class SessionItem(Base):
     session_id = Column(String, ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
     pack_id = Column(String, ForeignKey("packs.id", ondelete="CASCADE"), nullable=True)
     mock_exam_id = Column(String, ForeignKey("mock_exams.id", ondelete="CASCADE"), nullable=True)
-    # optional: question_bank_id in future
+    question_bank_id = Column(String, ForeignKey("question_banks.id", ondelete="CASCADE"), nullable=True)
 
     session = relationship("Session", back_populates="session_items")  
     pack = relationship("Pack", back_populates="session_items")
     mock_exam = relationship("MockExam", back_populates="session_items")
+    question_bank = relationship("QuestionBank")

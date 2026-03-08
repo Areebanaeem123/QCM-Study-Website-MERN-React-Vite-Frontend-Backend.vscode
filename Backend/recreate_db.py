@@ -19,6 +19,7 @@ import app.models.mock_exam_purchase
 import app.models.mock_exam_review
 import app.models.question_bank
 import app.models.question_bank_purchase
+import app.models.question_bank_review
 import app.models.session
 import app.models.page
 import app.models.slider

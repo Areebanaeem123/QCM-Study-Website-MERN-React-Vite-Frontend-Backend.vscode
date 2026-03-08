@@ -33,8 +33,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { ImageUpload } from "@/components/admin/image-upload"
-import { AdminService, PackResponse, University, Subject, Lesson, MCQ } from "@/lib/admin-service"
-import { Plus, Search, Edit2, Trash2, Loader2, AlertCircle, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { AdminService, PackResponse, University, Subject, Lesson, MCQ, PackPurchaser, PackReview, User } from "@/lib/admin-service"
+import { Plus, Search, Edit2, Trash2, Loader2, AlertCircle, X, ChevronLeft, ChevronRight, BarChart3, Eye, Star, User as UserIcon } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function AdminPacksPage() {
   const router = useRouter()
@@ -49,6 +50,17 @@ export default function AdminPacksPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
   const itemsPerPage = 10
+  
+  // Stats and Demo state
+  const [selectedPackStats, setSelectedPackStats] = useState<PackResponse | null>(null)
+  const [isStatsDialogOpen, setIsStatsDialogOpen] = useState(false)
+  const [purchasers, setPurchasers] = useState<PackPurchaser[]>([])
+  const [reviews, setReviews] = useState<PackReview[]>([])
+  const [loadingStats, setLoadingStats] = useState(false)
+  const [demoPack, setDemoPack] = useState<PackResponse | null>(null)
+  const [userSearchQuery, setUserSearchQuery] = useState("")
+  const [userSearchResults, setUserSearchResults] = useState<User[]>([])
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -301,6 +313,58 @@ export default function AdminPacksPage() {
     if (!open) {
       resetForm()
       setError("")
+    }
+  }
+
+  const handleViewStats = async (pack: PackResponse) => {
+    setSelectedPackStats(pack)
+    setIsStatsDialogOpen(true)
+    setLoadingStats(true)
+    try {
+      const purchasersData = await AdminService.getPackPurchasers(pack.id)
+      const reviewsData = await AdminService.getPackReviews(pack.id)
+      setPurchasers(purchasersData)
+      setReviews(reviewsData)
+    } catch (err: any) {
+      console.error("Failed to load pack stats", err)
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
+  const handleGiftPack = async (userId: string, packId: string) => {
+    try {
+      await AdminService.grantPackToUser(userId, packId)
+      // Reload purchasers to show update
+      const updated = await AdminService.getPackPurchasers(packId)
+      setPurchasers(updated)
+    } catch (err: any) {
+      alert(err.message || "Failed to gift pack")
+    }
+  }
+
+  const handleRevokePack = async (userId: string, packId: string) => {
+    if (!confirm("Are you sure you want to revoke this pack?")) return
+    try {
+      await AdminService.revokePackFromUser(userId, packId)
+      // Reload purchasers to show update
+      const updated = await AdminService.getPackPurchasers(packId)
+      setPurchasers(updated)
+    } catch (err: any) {
+      alert(err.message || "Failed to revoke pack")
+    }
+  }
+
+  const handleUserSearch = async () => {
+    if (!userSearchQuery.trim()) return
+    setIsSearchingUsers(true)
+    try {
+      const response = await AdminService.getUsers(userSearchQuery, "alphabetical", 0, 5)
+      setUserSearchResults(response.items)
+    } catch (err: any) {
+      console.error("Failed to search users", err)
+    } finally {
+      setIsSearchingUsers(false)
     }
   }
 
@@ -717,11 +781,11 @@ export default function AdminPacksPage() {
                 <TableRow>
                   <TableHead>Image</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Dates</TableHead>
                   <TableHead>University</TableHead>
                   <TableHead>Price</TableHead>
-                  <TableHead>MCQs</TableHead>
-                  <TableHead>Published</TableHead>
+                  <TableHead>Sales/Rating</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -746,17 +810,33 @@ export default function AdminPacksPage() {
                           }}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">{pack.title}</TableCell>
-                      <TableCell>
-                        <Badge variant={pack.type === "pack" ? "default" : "secondary"}>
+                      <TableCell className="font-medium">
+                        <div>{pack.title}</div>
+                        <Badge variant={pack.type === "pack" ? "default" : "secondary"} className="text-[10px] h-4 mt-1">
                           {pack.type === "pack" ? "Pack" : "Mock Exam"}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="text-muted-foreground">Du: {new Date(pack.start_datetime).toLocaleDateString()}</div>
+                        <div className="text-destructive">Au: {new Date(pack.expiry_datetime).toLocaleDateString()}</div>
+                      </TableCell>
                       <TableCell>{pack.university_name || pack.university_id}</TableCell>
                       <TableCell>
-                        {pack.price} {pack.currency}
+                        <div className="font-semibold">{pack.price} {pack.currency}</div>
+                        <div className="text-xs text-muted-foreground">{pack.mcqs?.length || 0} MCQs</div>
                       </TableCell>
-                      <TableCell>{pack.mcqs?.length || 0}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1 text-sm">
+                            <UserIcon className="h-3 w-3 text-blue-500" />
+                            <span>{pack.sales_count || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span>{pack.average_rating || 0}</span>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={pack.is_published ? "default" : "secondary"}>
                           {pack.is_published ? "Published" : "Draft"}
@@ -767,6 +847,23 @@ export default function AdminPacksPage() {
                           <Button
                             size="sm"
                             variant="outline"
+                            title="Visualiser Statistiques"
+                            onClick={() => handleViewStats(pack)}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Mode Démo"
+                            onClick={() => setDemoPack(pack)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Modifier"
                             onClick={() => handleEdit(pack)}
                           >
                             <Edit2 className="h-4 w-4" />
@@ -774,6 +871,7 @@ export default function AdminPacksPage() {
                           <Button
                             size="sm"
                             variant="destructive"
+                            title="Supprimer"
                             onClick={() => handleDelete(pack.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -814,6 +912,196 @@ export default function AdminPacksPage() {
             </div>
           )}
         </>
+      )}
+      {/* Stats Dialog */}
+      <Dialog open={isStatsDialogOpen} onOpenChange={setIsStatsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Statistiques du pack: {selectedPackStats?.title}</DialogTitle>
+            <DialogDescription>
+              Acheteurs, évaluations et performances du pack
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="purchasers" className="flex-1 overflow-hidden flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="purchasers">Étudiants ({purchasers.length})</TabsTrigger>
+              <TabsTrigger value="reviews">Évaluations ({reviews.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="purchasers" className="flex-1 overflow-y-auto mt-4 space-y-6">
+              {/* User Search for Gifting */}
+              <div className="bg-muted/30 p-4 rounded-lg border border-dashed">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Offrir ce pack à un étudiant
+                </h4>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Chercher par nom ou email..." 
+                      className="pl-9"
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUserSearch()}
+                    />
+                  </div>
+                  <Button onClick={handleUserSearch} disabled={isSearchingUsers}>
+                    {isSearchingUsers ? <Loader2 className="h-4 w-4 animate-spin" /> : "Chercher"}
+                  </Button>
+                </div>
+
+                {userSearchResults.length > 0 && (
+                  <div className="mt-4 border rounded-md bg-background divide-y">
+                    {userSearchResults.map((u) => (
+                      <div key={u.id} className="p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{u.name}</p>
+                          <p className="text-xs text-muted-foreground">{u.email}</p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            handleGiftPack(u.id, selectedPackStats!.id)
+                            setUserSearchQuery("")
+                            setUserSearchResults([])
+                          }}
+                        >
+                          Offrir
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {loadingStats ? (
+                <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Date d'achat</TableHead>
+                      <TableHead>Mode</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {purchasers.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center py-4">Aucun acheteur</TableCell></TableRow>
+                    ) : (
+                      purchasers.map((p) => (
+                        <TableRow key={p.student_id}>
+                          <TableCell>{p.first_name} {p.last_name}</TableCell>
+                          <TableCell>{p.email}</TableCell>
+                          <TableCell>{new Date(p.purchased_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={p.gifted ? "secondary" : "outline"}>
+                              {p.gifted ? "Gifting" : "Achat"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleRevokePack(p.student_id, selectedPackStats!.id)}
+                            >
+                              Révoquer
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reviews" className="flex-1 overflow-y-auto mt-4">
+              {loadingStats ? (
+                <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">Aucune évaluation pour le moment</div>
+                  ) : (
+                    reviews.map((r, i) => (
+                      <div key={i} className="border rounded-md p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="font-semibold">{r.student_name}</div>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, idx) => (
+                              <Star 
+                                key={idx} 
+                                className={`h-4 w-4 ${idx < r.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-sm italic">"{r.comment || 'Aucun commentaire'}"</p>
+                        <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Demo Mode Overlay */}
+      {demoPack && (
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto p-4 md:p-8">
+          <div className="max-w-4xl mx-auto space-y-8 pb-20">
+            <div className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur pb-4 border-b">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setDemoPack(null)}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Retour
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">Mode Démo: {demoPack.title}</h1>
+                  <p className="text-muted-foreground">{demoPack.university_name} • {demoPack.mcqs?.length || 0} Questions</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="text-lg px-4 py-1">Aperçu Étudiant</Badge>
+            </div>
+
+            <div className="space-y-6">
+              {demoPack.mcqs?.map((mcq, index) => (
+                <div key={mcq.id} className="border rounded-lg p-6 space-y-4 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary">Question {index + 1}</Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push(`/admin-dashboard/mcqs?search=${encodeURIComponent(mcq.title)}`)}
+                    >
+                      <Edit2 className="mr-2 h-4 w-4" /> Modifier l'MCQ
+                    </Button>
+                  </div>
+                  <h3 className="text-xl font-semibold">{mcq.title}</h3>
+                  <div className="prose max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: mcq.question_text }} />
+                  <div className="grid gap-2 pt-2">
+                    {/* Placeholder for options if needed in demo */}
+                    <div className="text-sm italic text-muted-foreground p-3 border border-dashed rounded bg-background">
+                      Options and answers are hidden in demo list view. Use "Modifier" to see full details.
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {demoPack.mcqs?.length === 0 && (
+              <div className="text-center py-20 border border-dashed rounded-lg">
+                <p className="text-muted-foreground">Ce pack ne contient aucune question.</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

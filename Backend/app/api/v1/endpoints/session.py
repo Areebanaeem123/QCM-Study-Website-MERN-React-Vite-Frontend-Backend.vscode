@@ -40,7 +40,8 @@ def create_session(
         session_item = SessionItem(
             session_id=db_session.id,
             pack_id=item.pack_id,
-            mock_exam_id=item.mock_exam_id
+            mock_exam_id=item.mock_exam_id,
+            question_bank_id=item.question_bank_id
         )
         db.add(session_item)
 
@@ -83,7 +84,8 @@ def update_session(
             db.add(SessionItem(
                 session_id=db_session.id,
                 pack_id=item.pack_id,
-                mock_exam_id=item.mock_exam_id
+                mock_exam_id=item.mock_exam_id,
+                question_bank_id=item.question_bank_id
             ))
 
     db.commit()
