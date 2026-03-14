@@ -1,9 +1,47 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { BookOpen, Search, Users, Layers } from "lucide-react"
+import { BookOpen, Search, Users, Layers, Loader2, Star, ShoppingCart } from "lucide-react"
+import { ApiClient } from "@/lib/api-client"
+
+interface QuestionBankReview {
+  student_id: string
+  student_name: string
+  rating: number
+  comment: string
+  created_at: string
+}
+
+interface QuestionBankStudent {
+  student_id: string
+  student_name: string
+  purchased_at: string
+  gifted: boolean
+}
+
+interface QuestionBank {
+  id: string
+  title: string
+  description: string | null
+  image_url: string | null
+  price: number
+  currency: string
+  university_id: string
+  is_published: boolean
+  created_at: string
+  created_by: string
+  creator_name: string | null
+  start_datetime: string | null
+  expiry_datetime: string | null
+  display_before_start: boolean
+  students: QuestionBankStudent[]
+  reviews: QuestionBankReview[]
+  mcqs: any[]
+}
 
 // Dummy data for question banks
 const questionBanks = [
@@ -46,6 +84,48 @@ const questionBanks = [
 ]
 
 export default function QuestionBanksPage() {
+  const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([])
+  const [filteredBanks, setFilteredBanks] = useState<QuestionBank[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    fetchQuestionBanks()
+  }, [])
+
+  useEffect(() => {
+    filterBanks()
+  }, [searchQuery, questionBanks])
+
+  const fetchQuestionBanks = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await ApiClient.get<QuestionBank[]>("/question_banks/")
+      setQuestionBanks(data || [])
+    } catch (error: any) {
+      console.error("Failed to fetch question banks:", error)
+      setError("Impossible de charger les banques de QCM. Veuillez réessayer.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filterBanks = () => {
+    const filtered = questionBanks.filter((bank) =>
+      bank.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (bank.description && bank.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    setFilteredBanks(filtered)
+  }
+
+  const calculateAverageRating = (reviews: QuestionBankReview[]): number => {
+    if (!reviews || reviews.length === 0) return 0
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0)
+    return Math.round((sum / reviews.length) * 10) / 10
+  }
+
   return (
     <div className="py-12" suppressHydrationWarning>
       <div className="container mx-auto px-4">
@@ -61,47 +141,96 @@ export default function QuestionBanksPage() {
         <div className="mb-8 flex justify-center">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Rechercher une banque de QCM..." className="pl-10" />
+            <Input
+              placeholder="Rechercher une banque de QCM..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mr-3" />
+            <span className="text-muted-foreground">Chargement des banques de QCM...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg text-center mb-8">
+            {error}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && filteredBanks.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              {searchQuery ? "Aucune banque de QCM trouvée" : "Aucune banque de QCM disponible"}
+            </p>
+          </div>
+        )}
+
         {/* Question Banks Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {questionBanks.map((bank) => (
-            <Card key={bank.id} className="flex flex-col">
-              <CardHeader>
-                <Badge variant="outline">{bank.category}</Badge>
-                <CardTitle className="mt-2 text-foreground">{bank.title}</CardTitle>
-                <CardDescription>{bank.description}</CardDescription>
-              </CardHeader>
+        {!isLoading && !error && filteredBanks.length > 0 && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredBanks.map((bank) => {
+              const avgRating = calculateAverageRating(bank.reviews)
+              return (
+                <Card key={bank.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline">
+                        {bank.price > 0 ? `${bank.price}${bank.currency}` : "Gratuit"}
+                      </Badge>
+                      {avgRating > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-medium">{avgRating}</span>
+                        </div>
+                      )}
+                    </div>
+                    <CardTitle className="text-foreground">{bank.title}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {bank.description || "Pas de description disponible"}
+                    </CardDescription>
+                  </CardHeader>
 
-              <CardContent className="flex-1">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <Layers className="mx-auto h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-sm font-medium text-foreground">{bank.mcqCount}</p>
-                    <p className="text-xs text-muted-foreground">QCM</p>
-                  </div>
-                  <div>
-                    <Users className="mx-auto h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-sm font-medium text-foreground">{bank.participants}</p>
-                    <p className="text-xs text-muted-foreground">Étudiants</p>
-                  </div>
-                </div>
-              </CardContent>
+                  <CardContent className="flex-1">
+                    <div className="grid grid-cols-2 gap-4 text-center mb-4">
+                      <div>
+                        <Layers className="mx-auto h-5 w-5 text-muted-foreground mb-1" />
+                        <p className="text-sm font-medium text-foreground">{bank.mcqs?.length || 0}</p>
+                        <p className="text-xs text-muted-foreground">Questions</p>
+                      </div>
+                      <div>
+                        <Users className="mx-auto h-5 w-5 text-muted-foreground mb-1" />
+                        <p className="text-sm font-medium text-foreground">{bank.students?.length || 0}</p>
+                        <p className="text-xs text-muted-foreground">Étudiants</p>
+                      </div>
+                    </div>
 
-              <CardFooter className="flex items-center justify-between border-t border-border pt-4">
-                <span className="text-2xl font-bold text-foreground">{bank.price}€</span>
-                <Button asChild>
-                  <Link href={`/question-banks/${bank.id}`}>
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Accéder
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                    {bank.reviews && bank.reviews.length > 0 && (
+                      <div className="text-xs text-muted-foreground text-center">
+                        {bank.reviews.length} avis
+                      </div>
+                    )}
+                  </CardContent>
+
+                  <CardFooter className="border-t border-border pt-4">
+                    <Button className="w-full" onClick={() => {}}>
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Acheter
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

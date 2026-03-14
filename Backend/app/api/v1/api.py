@@ -17,7 +17,7 @@ api_router.include_router(user_router .router , prefix="/user_router",tags=["Get
 api_router.include_router(mcq_filter_router.router , prefix="/mcq_filter_router", tags=["MCQ Filtering"])
 api_router.include_router(pack_mcq_router.router , prefix="/pack_mcq_router", tags=["Pack MCQ Management"])
 api_router.include_router(mock_exams_admin.router , prefix="/mock_exams_admin", tags=["Admin Mock Exams Operations"])
-api_router.include_router(question_bank_router.router , prefix="/question_bank_router", tags=["Question Bank operations"])
+api_router.include_router(question_bank_router.router , prefix="/question_banks", tags=["Question Bank operations"])
 api_router.include_router(visualize_packs.router, prefix="/visualize_packs", tags=["Visualize MCQs"])
 api_router.include_router(mcq_research.router, prefix="/mcq_research", tags=["MCQ Research"])
 api_router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])

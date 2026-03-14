@@ -98,7 +98,6 @@ def create_question_bank(
 def list_question_banks(
     university_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     query = db.query(QuestionBank).filter(QuestionBank.is_published == True)
 

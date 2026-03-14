@@ -4,13 +4,6 @@ import { useState, useEffect } from "react"
 import { Search, University, BookOpen, ClipboardList, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { ApiClient } from "@/lib/api-client"
 
@@ -147,31 +140,6 @@ export default function UniversitiesPage() {
               <h2 className="text-xl font-semibold">
                 {selectedUniversity.name}
               </h2>
-
-              {/* Filters */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Formation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="medicine">Médecine</SelectItem>
-                    <SelectItem value="dentistry">Dentaire</SelectItem>
-                    <SelectItem value="pharmacy">Pharmacie</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Statut du contenu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">Nouveau</SelectItem>
-                    <SelectItem value="existing">Existant</SelectItem>
-                    <SelectItem value="all">Tout</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Action Buttons */}
               <div className="grid gap-4 md:grid-cols-2">

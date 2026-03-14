@@ -20,7 +20,7 @@ interface ApiError {
 
 export class ApiClient {
   // Public endpoints that don't require authentication
-  static publicEndpoints = ["/auth/login", "/auth/register", "/auth/refresh", "/universities/"]
+  static publicEndpoints = ["/auth/login", "/auth/register", "/auth/refresh", "/universities/", "/question_banks/"]
 
   static async request<T>(
     endpoint: string,
