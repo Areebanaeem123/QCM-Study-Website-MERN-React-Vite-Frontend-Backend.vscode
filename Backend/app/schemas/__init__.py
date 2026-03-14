@@ -6,7 +6,7 @@ from app.schemas.question_type import QuestionTypeCreate, QuestionTypeUpdate, Qu
 from app.schemas.mcq import MCQOptionCreate , MCQOptionResponse , MCQCreate , MCQUpdate , MCQResponse , MCQApprovalCreate , MCQApprovalResponse
 from app.schemas.pack import PackMCQAdd , PackMCQResponse , SessionCreate , SessionResponse , PackCreate , PackUpdate , PackStudentOut ,  PackReviewOut , PackOut
 from app.schemas.session import  SessionItemCreate , SessionCreate , SessionItemResponse , SessionResponse ,SessionUpdate
-from app.schemas.user import UserResponse , UserUpdatePrivilege , GiftPackRequest
+from app.schemas.user import UserResponse , UserUpdatePrivilege , GiftPackRequest, UserUpdate, PasswordUpdate
 from app.schemas.mock_exam import MockExamBase , MockExamMCQPreview , MockExamStudentOut , MockExamOut
 from app.schemas.page import PageCreate , PageUpdate , PageOut
 from app.schemas.slider import SliderCreate , SliderUpdate , SliderOut
@@ -19,6 +19,8 @@ __all__ = [
     "UniversityCreate",
     "UniversityUpdate",
     "UniversityResponse",
+    "UserUpdate",
+    "PasswordUpdate",
     "SubjectCreate",
     "SubjectUpdate",
     "SubjectResponse",              

@@ -79,7 +79,7 @@ export default function LessonsPage() {
       setUniversities(universitiesData)
       setSubjects(subjectsData)
     } catch (err: any) {
-      setError(err.message || "Failed to load data")
+      setError(err.message || "Échec du chargement des données")
     } finally {
       setIsLoading(false)
     }
@@ -92,15 +92,15 @@ export default function LessonsPage() {
 
   const handleAddLesson = async () => {
     if (!formName.trim()) {
-      setError("Lesson name is required")
+      setError("Le nom de la leçon est requis")
       return
     }
     if (!formUniversityId) {
-      setError("University selection is required")
+      setError("La sélection de l'université est requise")
       return
     }
     if (!formSubjectId) {
-      setError("Subject selection is required")
+      setError("La sélection du sujet est requise")
       return
     }
 
@@ -118,7 +118,7 @@ export default function LessonsPage() {
       setFormSubjectId("")
       setAddDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to add lesson")
+      setError(err.message || "Échec de l'ajout de la leçon")
     } finally {
       setIsSubmitting(false)
     }
@@ -127,7 +127,7 @@ export default function LessonsPage() {
   const handleEditLesson = async () => {
     if (!editingLesson) return
     if (!formName.trim()) {
-      setError("Lesson name is required")
+      setError("Le nom de la leçon est requis")
       return
     }
 
@@ -151,7 +151,7 @@ export default function LessonsPage() {
       setEditingLesson(null)
       setEditDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to update lesson")
+      setError(err.message || "Échec de la mise à jour de la leçon")
     } finally {
       setIsSubmitting(false)
     }
@@ -168,7 +168,7 @@ export default function LessonsPage() {
       setDeleteAlertOpen(false)
       setDeletingLesson(null)
     } catch (err: any) {
-      setError(err.message || "Failed to delete lesson")
+      setError(err.message || "Échec de la suppression de la leçon")
     } finally {
       setIsSubmitting(false)
     }
@@ -188,11 +188,11 @@ export default function LessonsPage() {
   }
 
   const getUniversityName = (universityId: string) => {
-    return universities.find((u) => u.id === universityId)?.name || "Unknown"
+    return universities.find((u) => u.id === universityId)?.name || "Inconnue"
   }
 
   const getSubjectName = (subjectId: string) => {
-    return subjects.find((s) => s.id === subjectId)?.name || "Unknown"
+    return subjects.find((s) => s.id === subjectId)?.name || "Inconnu"
   }
 
   const filteredLessons = lessons.filter((l) =>
@@ -276,9 +276,9 @@ export default function LessonsPage() {
                         {getSubjectName(lesson.subject_id)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{lesson.creator_name || "Unknown"}</TableCell>
+                    <TableCell>{lesson.creator_name || "Inconnu"}</TableCell>
                     <TableCell>
-                      {new Date(lesson.created_at).toLocaleDateString("en-US", {
+                      {new Date(lesson.created_at).toLocaleDateString("fr-FR", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",

@@ -127,7 +127,7 @@ export default function AdminMcqsPage() {
       setMcqsData(data)
       setCurrentPage(page)
     } catch (err: any) {
-      setError(err.message || "Failed to load MCQs")
+      setError(err.message || "Échec du chargement des QCM")
       setMcqsData(null)
     } finally {
       setIsLoading(false)
@@ -150,7 +150,7 @@ export default function AdminMcqsPage() {
         setLessons(lessonsData)
         setQuestionTypes(typesData)
       } catch (err: any) {
-        setError(err.message || "Failed to load data")
+        setError(err.message || "Échec du chargement des données")
       }
     }
 
@@ -217,7 +217,7 @@ export default function AdminMcqsPage() {
 
   const handleRemoveOption = (tempId?: string) => {
     if (formOptions.length <= 1) {
-      setError("At least one option is required")
+      setError("Au moins une option est requise")
       return
     }
     setFormOptions(formOptions.filter((opt) => opt.tempId !== tempId))
@@ -237,44 +237,44 @@ export default function AdminMcqsPage() {
 
   const handleAddMCQ = async (status: "draft" | "pending" = "draft") => {
     // Validation
-    if (!formTitle.trim()) {
-      setError("Question title is required")
+    if (formTitle.trim() === "") {
+      setError("Le titre de la question est requis")
       return
     }
-    if (!formQuestionText.trim()) {
-      setError("Question text is required")
+    if (formQuestionText.trim() === "") {
+      setError("Le texte de la question est requis")
       return
     }
     if (!formUniversityId) {
-      setError("University selection is required")
+      setError("La sélection de l'université est requise")
       return
     }
     if (!formSubjectId) {
-      setError("Subject selection is required")
+      setError("La sélection de la matière est requise")
       return
     }
     if (!formLessonId) {
-      setError("Lesson selection is required")
+      setError("La sélection de la leçon est requise")
       return
     }
     if (!formQuestionTypeId) {
-      setError("Question type selection is required")
+      setError("La sélection du type de question est requise")
       return
     }
     if (formOptions.length === 0) {
-      setError("At least one option is required")
+      setError("Au moins une option est requise")
       return
     }
 
     const hasAnswers = formOptions.some((opt) => opt.is_correct)
     if (!hasAnswers) {
-      setError("At least one option must be marked as correct")
+      setError("Au moins une option doit être marquée comme correcte")
       return
     }
 
     const hasEmptyOption = formOptions.some((opt) => !opt.option_text.trim())
     if (hasEmptyOption) {
-      setError("All options must have text")
+      setError("Toutes les options doivent avoir un texte")
       return
     }
 
@@ -315,7 +315,7 @@ export default function AdminMcqsPage() {
       setCurrentPage(0)
       await loadMCQs(0)
     } catch (err: any) {
-      setError(err.message || "Failed to add MCQ")
+      setError(err.message || "Échec de l'ajout du QCM")
     } finally {
       setIsSubmitting(false)
     }
@@ -326,11 +326,11 @@ export default function AdminMcqsPage() {
 
     // Validation
     if (!formTitle.trim()) {
-      setError("Question title is required")
+      setError("Le titre de la question est requis")
       return
     }
     if (!formQuestionText.trim()) {
-      setError("Question text is required")
+      setError("Le texte de la question est requis")
       return
     }
 
@@ -367,7 +367,7 @@ export default function AdminMcqsPage() {
       // Reload data
       await loadMCQs(currentPage)
     } catch (err: any) {
-      setError(err.message || "Failed to update MCQ")
+      setError(err.message || "Échec de la mise à jour du QCM")
     } finally {
       setIsSubmitting(false)
     }
@@ -386,7 +386,7 @@ export default function AdminMcqsPage() {
       // Reload data
       await loadMCQs(currentPage)
     } catch (err: any) {
-      setError(err.message || "Failed to delete MCQ")
+      setError(err.message || "Échec de la suppression du QCM")
     } finally {
       setIsSubmitting(false)
     }

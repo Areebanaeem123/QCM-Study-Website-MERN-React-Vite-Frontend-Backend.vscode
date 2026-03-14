@@ -54,7 +54,7 @@ export default function AdminStatisticsPage() {
         // Fetch Packs
         try {
           const packsData = await AdminService.getPacks()
-          setPacks(packsData) // It's an array now
+          setPacks(packsData.items) // Correctly access the items array
         } catch (error) {
           console.error("Failed to fetch packs", error)
         }

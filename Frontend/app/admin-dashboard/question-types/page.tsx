@@ -84,7 +84,7 @@ export default function AdminQuestionTypesPage() {
       const data = await AdminService.getQuestionTypes()
       setQuestionTypes(data)
     } catch (err: any) {
-      setError(err.message || "Failed to load question types")
+      setError(err.message || "Échec du chargement des types de questions")
     } finally {
       setIsLoading(false)
     }
@@ -125,11 +125,11 @@ export default function AdminQuestionTypesPage() {
   const handleAddQuestionType = async () => {
     // Validation
     if (!formName.trim()) {
-      setError("Type name is required")
+      setError("Le nom du type est requis")
       return
     }
     if (!formNumberOfOptions || parseInt(formNumberOfOptions) < 1) {
-      setError("Number of options must be at least 1")
+      setError("Le nombre d'options doit être d'au moins 1")
       return
     }
     if (
@@ -137,7 +137,7 @@ export default function AdminQuestionTypesPage() {
       (!formPartialCredit || parseFloat(formPartialCredit) < 0)
     ) {
       setError(
-        "Partial credit is required for 'Assess each option' mode and must be >= 0"
+        "Le crédit partiel est requis pour le mode 'Évaluer chaque option' et doit être >= 0"
       )
       return
     }
@@ -162,7 +162,7 @@ export default function AdminQuestionTypesPage() {
       setAddDialogOpen(false)
       resetForm()
     } catch (err: any) {
-      setError(err.message || "Failed to create question type")
+      setError(err.message || "Échec de la création du type de question")
     } finally {
       setIsSubmitting(false)
     }
@@ -174,11 +174,11 @@ export default function AdminQuestionTypesPage() {
 
     // Validation
     if (!formName.trim()) {
-      setError("Type name is required")
+      setError("Le nom du type est requis")
       return
     }
     if (!formNumberOfOptions || parseInt(formNumberOfOptions) < 1) {
-      setError("Number of options must be at least 1")
+      setError("Le nombre d'options doit être d'au moins 1")
       return
     }
     if (
@@ -186,7 +186,7 @@ export default function AdminQuestionTypesPage() {
       (!formPartialCredit || parseFloat(formPartialCredit) < 0)
     ) {
       setError(
-        "Partial credit is required for 'Assess each option' mode and must be >= 0"
+        "Le crédit partiel est requis pour le mode 'Évaluer chaque option' et doit être >= 0"
       )
       return
     }
@@ -216,7 +216,7 @@ export default function AdminQuestionTypesPage() {
       setEditDialogOpen(false)
       resetForm()
     } catch (err: any) {
-      setError(err.message || "Failed to update question type")
+      setError(err.message || "Échec de la mise à jour du type de question")
     } finally {
       setIsSubmitting(false)
     }
@@ -236,14 +236,14 @@ export default function AdminQuestionTypesPage() {
       setDeleteAlertOpen(false)
       setDeletingType(null)
     } catch (err: any) {
-      setError(err.message || "Failed to delete question type")
+      setError(err.message || "Échec de la suppression du type de question")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const getAnswerModeLabel = (mode: string) => {
-    return mode === "single_correct" ? "Select Answer" : "Assess Each Option"
+    return mode === "single_correct" ? "Sélectionner la réponse" : "Évaluer chaque option"
   }
 
   return (

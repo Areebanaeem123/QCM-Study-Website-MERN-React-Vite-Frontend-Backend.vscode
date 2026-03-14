@@ -1,0 +1,5 @@
+P: Introduction to REACT | T: pack | PUB: True | U: 18c6e180-39ee-4e2e-8e8c-c2ca5f1f981a
+P: Computer Vision  | T: pack | PUB: True | U: 18c6e180-39ee-4e2e-8e8c-c2ca5f1f981a
+P: Fundamentals of neural networks | T: pack | PUB: True | U: 18c6e180-39ee-4e2e-8e8c-c2ca5f1f981a
+P: phycis final mock exam Real | T: mock_exam | PUB: True | U: 18c6e180-39ee-4e2e-8e8c-c2ca5f1f981a
+P: Advanced Python Final Exam II | T: mock_exam | PUB: True | U: 7848ba05-0ed8-4fb0-b47e-c96f682bd85a

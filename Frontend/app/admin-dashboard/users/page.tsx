@@ -32,10 +32,10 @@ import {
 import { AdminService, User } from "@/lib/admin-service"
 
 const ROLE_NAMES: Record<number, string> = {
-  1: "Student",
-  2: "Writer",
-  3: "Content Manager",
-  6: "Admin",
+  1: "Étudiant",
+  2: "Rédacteur",
+  3: "Gestionnaire de contenu",
+  6: "Administrateur",
 }
 
 export default function AdminUsersPage() {
@@ -93,7 +93,7 @@ export default function AdminUsersPage() {
       setUsers(response.items)
       setTotalUsers(response.total)
     } catch (err: any) {
-      setError(err.message || "Failed to load users")
+      setError(err.message || "Échec du chargement des utilisateurs")
     } finally {
       setIsLoading(false)
     }
@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
       // Handle the case where AdminService.getPacks returns a paginated object
       setPacks(Array.isArray(data) ? data : (data as any).items || [])
     } catch (err: any) {
-      setError(err.message || "Failed to load packs")
+      setError(err.message || "Échec du chargement des packs")
     } finally {
       setIsLoadingPacks(false)
     }
@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
   const handlePrintPackMessage = () => {
     // TODO: Implement grant pack functionality
     // For now, show message that this requires pack selection
-    alert("Pack granting feature - select a pack to grant to this user")
+    alert("Fonctionnalité d'octroi de pack - sélectionnez un pack à offrir à cet utilisateur")
   }
 
   const handleGrantPack = async () => {

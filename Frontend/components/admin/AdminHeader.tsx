@@ -36,7 +36,7 @@ export function AdminHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>administrateur Compte</DropdownMenuLabel>
+            <DropdownMenuLabel>Compte Administrateur</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/admin">Tableau de bord</Link>

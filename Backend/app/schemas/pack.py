@@ -108,16 +108,16 @@ class PackResponse(BaseModel):
     description: Optional[str]
     price: float
     currency: str
-    start_datetime: datetime
-    expiry_datetime: datetime
-    display_before_start: bool
-    time_limit_minutes: Optional[int]
-    is_published: bool
-    created_at: datetime
-    creator_name: Optional[str]
+    start_datetime: Optional[datetime] = None
+    expiry_datetime: Optional[datetime] = None
+    display_before_start: Optional[bool] = False
+    time_limit_minutes: Optional[int] = None
+    is_published: Optional[bool] = False
+    created_at: Optional[datetime] = None
+    creator_name: Optional[str] = None
 
-    mcqs: List[PackMCQResponse]
-    sessions: List[SessionResponse]
+    mcqs: Optional[List[PackMCQResponse]] = []
+    sessions: Optional[List[SessionResponse]] = []
 
     class Config:
         from_attributes = True

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_db
@@ -96,11 +96,11 @@ def create_question_bank(
 # ---------------------------------------------------------
 @router.get("/", response_model=List[QuestionBankOut])
 def list_question_banks(
-    university_id: str = None,
+    university_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_question_bank_manager),
+    current_user: User = Depends(get_current_user),
 ):
-    query = db.query(QuestionBank)
+    query = db.query(QuestionBank).filter(QuestionBank.is_published == True)
 
     if university_id:
         query = query.filter(QuestionBank.university_id == university_id)
@@ -366,10 +366,10 @@ def access_question_bank(
 # ⭐ ADD REVIEW TO QUESTION BANK (Student)
 # ---------------------------------------------------------
 @router.post("/{qb_id}/review", status_code=status.HTTP_201_CREATED)
-def add_review(
+def review_question_bank(
     qb_id: str,
-    rating: int,
-    comment: str = None,
+    rating: int = Form(...),
+    comment: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

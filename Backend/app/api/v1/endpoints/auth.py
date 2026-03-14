@@ -24,6 +24,8 @@ from app.schemas.auth import (
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# Optional scheme — does NOT raise 401 when no token is provided
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 ADMIN_RANK = 6
 STUDENT_RANK = 1
@@ -74,6 +76,24 @@ def require_pack_creator(current_user: User = Depends(get_current_user)) -> User
             detail="Pack creator or Admin access required"
         )
     return current_user
+
+# Alias for compatibility with some older endpoint files
+require_pack_manager = require_pack_creator
+
+def get_optional_current_user(
+    token: str | None = Depends(optional_oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User | None:
+    """Get current user if a valid token is provided; return None otherwise."""
+    if not token:
+        return None
+    payload = decode_token(token)
+    if payload is None or payload.get("type") != "access":
+        return None
+    user_id = payload.get("sub")
+    if user_id is None:
+        return None
+    return db.query(User).filter(User.id == user_id).first()
 
 from fastapi import Request
 
@@ -265,4 +285,46 @@ async def refresh_token(
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
     return current_user
+
+
+from app.schemas.user import UserUpdate, PasswordUpdate
+
+@router.put("/me", response_model=UserResponse)
+async def update_current_user(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    update_dict = update_data.dict(exclude_unset=True)
+    
+    # Handle date_of_birth string to date conversion if present
+    if "date_of_birth" in update_dict and update_dict["date_of_birth"]:
+        from datetime import datetime
+        try:
+            update_dict["date_of_birth"] = datetime.strptime(update_dict["date_of_birth"], "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    for key, value in update_dict.items():
+        setattr(current_user, key, value)
+    
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.put("/me/password")
+async def change_password(
+    password_data: PasswordUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change current user password."""
+    if not verify_password(password_data.current_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Le mot de passe actuel est incorrect")
+    
+    current_user.password = get_password_hash(password_data.new_password)
+    db.commit()
+    
+    return {"msg": "Mot de passe mis à jour avec succès"}
 

@@ -106,7 +106,7 @@ export default function MCQApprovalsPage() {
       setPendingMCQsData(data)
       setCurrentPage(page)
     } catch (err: any) {
-      setError(err.message || "Failed to load pending MCQs")
+      setError(err.message || "Échec du chargement des QCM en attente")
       setPendingMCQsData(null)
     } finally {
       setIsLoading(false)
@@ -129,7 +129,7 @@ export default function MCQApprovalsPage() {
         setLessons(lessonsData)
         setQuestionTypes(typesData)
       } catch (err: any) {
-        setError(err.message || "Failed to load data")
+        setError(err.message || "Échec du chargement des données")
       }
     }
 
@@ -164,7 +164,7 @@ export default function MCQApprovalsPage() {
       setViewMode("list")
       setSelectedMCQ(null)
     } catch (err: any) {
-      setError(err.message || "Failed to approve MCQ")
+      setError(err.message || "Échec de l'approbation du QCM")
     } finally {
       setIsSubmitting(false)
     }
@@ -184,7 +184,7 @@ export default function MCQApprovalsPage() {
       setRejectDialogOpen(false)
       setRejectionComment("")
     } catch (err: any) {
-      setError(err.message || "Failed to reject MCQ")
+      setError(err.message || "Échec du rejet du QCM")
     } finally {
       setIsSubmitting(false)
     }
@@ -212,7 +212,7 @@ export default function MCQApprovalsPage() {
       setViewMode("list")
       setSelectedMCQ(null)
     } catch (err: any) {
-      setError(err.message || "Failed to save and approve MCQ")
+      setError(err.message || "Échec de l'enregistrement et de l'approbation du QCM")
     } finally {
       setIsSubmitting(false)
     }
@@ -238,14 +238,14 @@ export default function MCQApprovalsPage() {
       setViewMode("list")
       setSelectedMCQ(null)
     } catch (err: any) {
-      setError(err.message || "Failed to save modifications")
+      setError(err.message || "Échec de l'enregistrement des modifications")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const getCreatorName = (mcq: MCQWithApprovalsResponse) => {
-    return mcq.creator_name || "Unknown"
+    return mcq.creator_name || "Inconnu"
   }
 
   const formatDate = (dateString: string) => {

@@ -579,16 +579,6 @@ export class AdminService {
     }
   }
 
-  /**
-   * Get list of all available packs for granting
-   */
-  static async getPacks(): Promise<Pack[]> {
-    try {
-      return await ApiClient.get<Pack[]>(`/admin/packs`)
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch packs")
-    }
-  }
 
   /**
    * Get list of all universities
@@ -911,7 +901,7 @@ export class AdminService {
    */
   static async deleteMCQ(mcqId: string): Promise<void> {
     try {
-      await ApiClient.delete(`/mcqs/${mcqId}`)
+      await ApiClient.delete(`/admin/mcqs/${mcqId}`)
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete MCQ")
     }
@@ -1111,20 +1101,6 @@ export class AdminService {
     }
   }
 
-  /**
-   * Search MCQs by keyword or ID (rank 5,6 only)
-   */
-  static async searchMCQs(keyword?: string, mcqId?: string): Promise<MCQ[]> {
-    try {
-      const params = new URLSearchParams()
-      if (keyword) params.append("keyword", keyword)
-      if (mcqId) params.append("mcq_id", mcqId)
-      
-      return await ApiClient.get<MCQ[]>(`/mcq_research?${params.toString()}`)
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to search MCQs")
-    }
-  }
 
   /**
    * Get list of mock exams with pagination and filtering
@@ -1449,22 +1425,28 @@ export class AdminService {
     }
   }
 
-  /**
-   * Get all packs
-   */
-  static async getPacks(): Promise<PackResponse[]> {
-    try {
-      return await ApiClient.get<PackResponse[]>("/visualize_packs/")
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch packs")
-    }
-  }
-
   static async deleteSlider(id: number): Promise<void> {
     try {
       await ApiClient.delete(`/slider/${id}`)
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete slider")
+    }
+  }
+
+  /**
+   * Upload an image and return the URL
+   */
+  static async uploadImage(file: File): Promise<{ url: string; filename: string }> {
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      
+      return await ApiClient.request<{ url: string; filename: string }>("/upload/image", {
+        method: "POST",
+        body: formData
+      })
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to upload image")
     }
   }
 }

@@ -25,20 +25,20 @@ export default function SessionsPage() {
       const data = await SessionService.getSessions()
       setSessions(data)
     } catch (error: any) {
-      toast.error(error.message || "Failed to load sessions")
+      toast.error(error.message || "Échec du chargement des sessions")
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete session "${name}"?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la session "${name}" ?`)) {
       try {
         await SessionService.deleteSession(id)
-        toast.success("Session deleted successfully")
+        toast.success("Session supprimée avec succès")
         loadSessions()
       } catch (error: any) {
-        toast.error(error.message || "Failed to delete session")
+        toast.error(error.message || "Échec de la suppression de la session")
       }
     }
   }
@@ -49,7 +49,7 @@ export default function SessionsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sessions</h1>
           <p className="text-muted-foreground">
-            Manage access sessions for packs, mock exams, and question banks.
+            Gérez les sessions d'accès pour les packs, les examens blancs et les banques de questions.
           </p>
         </div>
         <CreateSessionDialog onSuccess={loadSessions} />
@@ -62,9 +62,9 @@ export default function SessionsPage() {
           </div>
         ) : sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <h3 className="text-lg font-medium">No sessions found</h3>
+            <h3 className="text-lg font-medium">Aucune session trouvée</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Create a session to start grouping your items.
+              Créez une session pour commencer à regrouper vos éléments.
             </p>
           </div>
         ) : (
@@ -72,10 +72,10 @@ export default function SessionsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">
                 <tr>
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Start Date</th>
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Expiry Date</th>
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Items</th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Nom</th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Date de Début</th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Date d'Expiration</th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Éléments</th>
                   <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -86,7 +86,7 @@ export default function SessionsPage() {
                     <td className="p-4 align-middle">{new Date(session.start_date).toLocaleDateString()}</td>
                     <td className="p-4 align-middle">{new Date(session.expiry_date).toLocaleDateString()}</td>
                     <td className="p-4 align-middle">
-                      {session.session_items?.length || 0} items
+                      {session.session_items?.length || 0} éléments
                     </td>
                     <td className="p-4 align-middle text-right">
                       <div className="flex justify-end gap-2">

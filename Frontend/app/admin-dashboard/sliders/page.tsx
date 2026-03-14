@@ -21,6 +21,7 @@ export default function AdminSlidersPage() {
   const [btnLink, setBtnLink] = useState("")
   
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
     fetchSliders()
@@ -31,15 +32,35 @@ export default function AdminSlidersPage() {
     try {
       const data = await AdminService.getSliders()
       setSliders(data)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch sliders", error)
+      toast.error(error.message || "Erreur lors du chargement des sliders")
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const result = await AdminService.uploadImage(file)
+      setImageUrl(result.url)
+      toast.success("Image téléchargée")
+    } catch (error: any) {
+      console.error("[SlidersPage] Upload failed:", error)
+      toast.error(error.message || "Erreur lors de l'envoi")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const handleAddSlider = async () => {
+    console.log("[SlidersPage] Attempting to add slider:", { title, imageUrl, subtitle, btnText, btnLink })
     if (!title || !imageUrl) {
+      console.warn("[SlidersPage] Missing required fields")
       toast.error("Le titre et l'URL de l'image sont requis")
       return
     }
@@ -53,11 +74,14 @@ export default function AdminSlidersPage() {
         button_text: btnText,
         button_link: btnLink
       })
+      console.log("[SlidersPage] Slider added successfully")
       toast.success("Slider ajouté")
       clearForm()
       fetchSliders()
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de l'ajout")
+      console.error("[SlidersPage] Failed to add slider:", error)
+      const detail = error.detail || error.message || "Erreur lors de l'ajout"
+      toast.error(typeof detail === 'string' ? detail : JSON.stringify(detail))
     } finally {
       setIsSubmitting(false)
     }
@@ -114,8 +138,30 @@ export default function AdminSlidersPage() {
             <Input placeholder="Ex: Offre limitée" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">URL de l'image</label>
-            <Input placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+            <label className="text-sm font-medium">Image (URL ou Téléchargement)</label>
+            <div className="flex gap-2">
+              <Input placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+              <div className="relative">
+                <Input 
+                  type="file" 
+                  className="hidden" 
+                  id="image-upload" 
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                   size="icon"
+                  className="shrink-0"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Texte du bouton</label>

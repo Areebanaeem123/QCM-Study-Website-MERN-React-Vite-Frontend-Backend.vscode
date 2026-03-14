@@ -93,9 +93,9 @@ class QuestionBankOut(BaseModel):
     price: float
     currency: str
 
-    start_datetime: datetime
-    expiry_datetime: datetime
-    display_before_start: bool
+    start_datetime: Optional[datetime] = None
+    expiry_datetime: Optional[datetime] = None
+    display_before_start: Optional[bool] = False
 
     is_published: bool
     created_at: datetime

@@ -23,6 +23,24 @@ export interface RegisterPayload {
   is_robot_verified: boolean
 }
 
+export interface UserUpdatePayload {
+  first_name?: string
+  last_name?: string
+  civility?: string
+  date_of_birth?: string
+  address?: string
+  country?: string
+  phone_number?: string
+  university?: string
+  academic_year?: string
+  profile_picture?: string
+}
+
+export interface PasswordUpdatePayload {
+  current_password: string
+  new_password: string
+}
+
 export interface LoginPayload {
   email: string
   password: string
@@ -50,6 +68,14 @@ export interface UserResponse {
   email: string
   first_name?: string
   last_name?: string
+  civility?: string
+  date_of_birth?: string
+  address?: string
+  country?: string
+  phone_number?: string
+  university?: string
+  academic_year?: string
+  profile_picture?: string
   rank: number
   email_verified?: string | null
   created_at: string
@@ -142,6 +168,50 @@ export class AuthService {
    */
   static isAuthenticated(): boolean {
     return ApiClient.isAuthenticated()
+  }
+
+  /**
+   * Update current user profile
+   */
+  static async updateProfile(payload: UserUpdatePayload): Promise<UserResponse> {
+    try {
+      return await ApiClient.put<UserResponse>("/auth/me", payload)
+    } catch (error: any) {
+      throw {
+        message: error.message || "Failed to update profile",
+        status: error.status,
+      }
+    }
+  }
+
+  /**
+   * Update current user password
+   */
+  static async updatePassword(payload: PasswordUpdatePayload): Promise<{ msg: string }> {
+    try {
+      return await ApiClient.put<{ msg: string }>("/auth/me/password", payload)
+    } catch (error: any) {
+      throw {
+        message: error.message || "Failed to update password",
+        status: error.status,
+      }
+    }
+  }
+
+  /**
+   * Upload profile picture
+   */
+  static async uploadProfilePicture(file: File): Promise<{ url: string }> {
+    const formData = new FormData()
+    formData.append("file", file)
+    try {
+      return await ApiClient.post<{ url: string }>("/upload/image", formData)
+    } catch (error: any) {
+      throw {
+        message: error.message || "Failed to upload image",
+        status: error.status,
+      }
+    }
   }
 
   /**

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.models.user import User
@@ -10,16 +10,9 @@ from app.models.session import Session as PackSession
 from app.models.mcq import MCQ
 from app.models.university import University
 from app.schemas.pack import PackCreate, PackUpdate, PackResponse
-from app.api.v1.endpoints.auth import get_current_user
+from app.api.v1.endpoints.auth import get_current_user, require_admin, require_pack_manager
 
 router = APIRouter()
-
-
-# 🔐 Only Rank 5 & 6
-def require_pack_manager(user: User = Depends(get_current_user)):
-    if user.rank < 5:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    return user
 
 
 # ---------------------------------------------------------
@@ -85,11 +78,13 @@ def create_pack(
 # ---------------------------------------------------------
 @router.get("/", response_model=List[PackResponse])
 def list_packs(
-    university_id: str = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_pack_manager)
+    university_id: Optional[str] = None,
+    db: Session = Depends(get_db)
 ):
-    query = db.query(Pack)
+    query = db.query(Pack).filter(
+        Pack.is_published == True,
+        Pack.type == "pack"
+    )
 
     if university_id:
         query = query.filter(Pack.university_id == university_id)

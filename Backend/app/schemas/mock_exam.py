@@ -26,10 +26,12 @@ class MockExamOut(BaseModel):
     description: Optional[str]
     image_url: Optional[str]
     university_id: str
+    price: Optional[float] = 0.0
+    currency: Optional[str] = "CHF"
     created_at: datetime
-    total_questions: int
-    total_purchases: int
-    average_rating: Optional[float]
+    total_questions: Optional[int] = 0
+    total_purchases: Optional[int] = 0
+    average_rating: Optional[float] = 0.0
 
     class Config:
         from_attributes = True

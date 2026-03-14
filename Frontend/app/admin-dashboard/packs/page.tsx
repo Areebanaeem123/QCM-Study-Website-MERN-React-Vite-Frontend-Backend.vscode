@@ -106,7 +106,7 @@ export default function AdminPacksPage() {
       )
       setPacks(response.items)
     } catch (err: any) {
-      setError(err.message || "Failed to load packs")
+      setError(err.message || "Échec du chargement des packs")
     } finally {
       setLoading(false)
     }
@@ -117,7 +117,7 @@ export default function AdminPacksPage() {
       const response = await AdminService.getUniversities()
       setUniversities(response)
     } catch (err: any) {
-      console.error("Failed to load universities")
+      console.error("Échec du chargement des universités")
       setUniversities([])
     }
   }
@@ -131,7 +131,7 @@ export default function AdminPacksPage() {
       const response = await AdminService.getSubjectsByUniversity(universityId)
       setSubjects(response.items)
     } catch (err: any) {
-      console.error("Failed to load subjects")
+      console.error("Échec du chargement des matières")
     }
   }
 
@@ -144,7 +144,7 @@ export default function AdminPacksPage() {
       const response = await AdminService.getLessonsBySubject(subjectId)
       setLessons(response.items)
     } catch (err: any) {
-      console.error("Failed to load lessons")
+      console.error("Échec du chargement des leçons")
     }
   }
 
@@ -157,7 +157,7 @@ export default function AdminPacksPage() {
       const response = await AdminService.getMCQsByLesson(lessonId, 0, 100)
       setAvailableMCQs(response.items)
     } catch (err: any) {
-      console.error("Failed to load MCQs")
+      console.error("Échec du chargement des QCM")
     }
   }
 
@@ -219,13 +219,13 @@ export default function AdminPacksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.university_id || formData.mcq_ids.length === 0) {
-      setError("Please fill in all required fields and select at least one MCQ")
+      setError("Veuillez remplir tous les champs obligatoires et sélectionner au moins un QCM")
       return
     }
 
     // Validate datetime fields
     if (!formData.start_datetime || !formData.expiry_datetime) {
-      setError("Please fill in both start and expiry dates")
+      setError("Veuillez remplir les dates de début et d'expiration")
       return
     }
 
@@ -250,7 +250,7 @@ export default function AdminPacksPage() {
       setIsCreateDialogOpen(false)
       await loadPacks()
     } catch (err: any) {
-      setError(err.message || "Failed to save pack")
+      setError(err.message || "Échec de l'enregistrement du pack")
     } finally {
       setIsSubmitting(false)
     }
@@ -277,13 +277,13 @@ export default function AdminPacksPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this pack?")) return
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce pack ?")) return
 
     try {
       await AdminService.deletePack(id)
       await loadPacks()
     } catch (err: any) {
-      setError(err.message || "Failed to delete pack")
+      setError(err.message || "Échec de la suppression du pack")
     }
   }
 
@@ -326,7 +326,7 @@ export default function AdminPacksPage() {
       setPurchasers(purchasersData)
       setReviews(reviewsData)
     } catch (err: any) {
-      console.error("Failed to load pack stats", err)
+      console.error("Échec du chargement des statistiques du pack", err)
     } finally {
       setLoadingStats(false)
     }
@@ -339,19 +339,19 @@ export default function AdminPacksPage() {
       const updated = await AdminService.getPackPurchasers(packId)
       setPurchasers(updated)
     } catch (err: any) {
-      alert(err.message || "Failed to gift pack")
+      alert(err.message || "Échec de l'attribution du pack")
     }
   }
 
   const handleRevokePack = async (userId: string, packId: string) => {
-    if (!confirm("Are you sure you want to revoke this pack?")) return
+    if (!confirm("Êtes-vous sûr de vouloir révoquer ce pack ?")) return
     try {
       await AdminService.revokePackFromUser(userId, packId)
       // Reload purchasers to show update
       const updated = await AdminService.getPackPurchasers(packId)
       setPurchasers(updated)
     } catch (err: any) {
-      alert(err.message || "Failed to revoke pack")
+      alert(err.message || "Échec de la révocation du pack")
     }
   }
 
@@ -362,7 +362,7 @@ export default function AdminPacksPage() {
       const response = await AdminService.getUsers(userSearchQuery, "alphabetical", 0, 5)
       setUserSearchResults(response.items)
     } catch (err: any) {
-      console.error("Failed to search users", err)
+      console.error("Échec de la recherche d'utilisateurs", err)
     } finally {
       setIsSearchingUsers(false)
     }
@@ -375,24 +375,24 @@ export default function AdminPacksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">
-            {packType === "mock_exam" ? "Mock Exams" : "Packs"}
+            {packType === "mock_exam" ? "Examens Blancs" : "Packs"}
           </h2>
           <p className="text-muted-foreground">
-            Create and manage learning packs and mock exams
+            Créez et gérez les packs d'apprentissage et les examens blancs
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
               <Plus className="mr-2 h-4 w-4" />
-              New Pack
+              Nouveau Pack
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>{editingPack ? "Edit Pack" : "Create New Pack"}</DialogTitle>
+              <DialogTitle>{editingPack ? "Modifier le pack" : "Créer un nouveau pack"}</DialogTitle>
               <DialogDescription>
-                Create a pack or mock exam by grouping MCQs together
+                Créez un pack ou un examen blanc en regroupant des QCM
               </DialogDescription>
             </DialogHeader>
             {error && (
@@ -403,12 +403,12 @@ export default function AdminPacksPage() {
             )}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-4 space-y-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Titre *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Biology 101"
+                  placeholder="ex. Biologie 101"
                   required
                 />
               </div>
@@ -419,7 +419,7 @@ export default function AdminPacksPage() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe this pack"
+                  placeholder="Décrivez ce pack"
                   rows={3}
                 />
               </div>
@@ -447,16 +447,16 @@ export default function AdminPacksPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pack">Pack</SelectItem>
-                      <SelectItem value="mock_exam">Mock Exam</SelectItem>
+                      <SelectItem value="mock_exam">Examen Blanc</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="university">University *</Label>
+                  <Label htmlFor="university">Université *</Label>
                   <Select value={formData.university_id} onValueChange={handleUniversityChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select university" />
+                      <SelectValue placeholder="Sélectionnez une université" />
                     </SelectTrigger>
                     <SelectContent>
                       {universities.map((uni) => (
@@ -469,7 +469,7 @@ export default function AdminPacksPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="price">Price *</Label>
+                  <Label htmlFor="price">Prix *</Label>
                   <Input
                     id="price"
                     type="number"
@@ -488,7 +488,7 @@ export default function AdminPacksPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="currency">Currency *</Label>
+                  <Label htmlFor="currency">Devise *</Label>
                   <Select value={formData.currency} onValueChange={(value) =>
                     setFormData({ ...formData, currency: value as "CHF" | "GBP" | "USD" })
                   }>
@@ -504,7 +504,7 @@ export default function AdminPacksPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Label htmlFor="startDate">Date de Début *</Label>
                   <Input
                     id="startDate"
                     type="datetime-local"
@@ -515,7 +515,7 @@ export default function AdminPacksPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="expiryDate">Expiry Date *</Label>
+                  <Label htmlFor="expiryDate">Date d'Expiration *</Label>
                   <Input
                     id="expiryDate"
                     type="datetime-local"
@@ -526,7 +526,7 @@ export default function AdminPacksPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
+                  <Label htmlFor="timeLimit">Limite de Temps (minutes)</Label>
                   <Input
                     id="timeLimit"
                     type="number"
@@ -538,7 +538,7 @@ export default function AdminPacksPage() {
                         time_limit_minutes: e.target.value ? parseInt(e.target.value) : null,
                       })
                     }
-                    placeholder="Leave empty for unlimited"
+                    placeholder="Laissez vide pour illimité"
                   />
                 </div>
               </div>
@@ -552,7 +552,7 @@ export default function AdminPacksPage() {
                       setFormData({ ...formData, display_before_start: checked as boolean })
                     }
                   />
-                  <Label htmlFor="displayBefore">Display Before Start Date</Label>
+                  <Label htmlFor="displayBefore">Afficher avant la date de début</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -562,21 +562,21 @@ export default function AdminPacksPage() {
                       setFormData({ ...formData, is_published: checked as boolean })
                     }
                   />
-                  <Label htmlFor="publish">Publish Immediately</Label>
+                  <Label htmlFor="publish">Publier immédiatement</Label>
                 </div>
               </div>
 
               <div>
-                <Label>Select MCQs *</Label>
+                <Label>Sélectionner des QCM *</Label>
                 <div className="border rounded-md p-4 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="subjectSelect" className="text-sm">
-                        Subject
+                        Matière
                       </Label>
                       <Select value={selectedSubjectId} onValueChange={handleSubjectChange}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select subject" />
+                          <SelectValue placeholder="Sélectionnez une matière" />
                         </SelectTrigger>
                         <SelectContent>
                           {subjects.map((subject) => (
@@ -590,11 +590,11 @@ export default function AdminPacksPage() {
 
                     <div>
                       <Label htmlFor="lessonSelect" className="text-sm">
-                        Lesson
+                        Leçon
                       </Label>
                       <Select value={selectedLessonId} onValueChange={handleLessonChange}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select lesson" />
+                          <SelectValue placeholder="Sélectionnez une leçon" />
                         </SelectTrigger>
                         <SelectContent>
                           {lessons.map((lesson) => (
@@ -609,7 +609,7 @@ export default function AdminPacksPage() {
 
                   {availableMCQs.length > 0 && (
                     <div>
-                      <Label className="text-sm">Available MCQs</Label>
+                      <Label className="text-sm">QCM Disponibles</Label>
                       <div className="h-40 border rounded-md p-2 overflow-y-auto">
                         <div className="space-y-1">
                           {availableMCQs.map((mcq) => (
@@ -641,7 +641,7 @@ export default function AdminPacksPage() {
 
                   {formData.mcq_ids.length > 0 && (
                     <div>
-                      <Label className="text-sm">Selected MCQs ({formData.mcq_ids.length})</Label>
+                      <Label className="text-sm">QCM Sélectionnés ({formData.mcq_ids.length})</Label>
                       <div className="flex flex-wrap gap-2">
                         {formData.mcq_ids.map((mcqId) => {
                           const mcq = availableMCQs.find((m) => m.id === mcqId) ||
@@ -674,18 +674,18 @@ export default function AdminPacksPage() {
                   onClick={() => handleDialogOpenChange(false)}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  Annuler
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Enregistrement...
                     </>
                   ) : editingPack ? (
-                    "Update Pack"
+                    "Mettre à jour le pack"
                   ) : (
-                    "Create Pack"
+                    "Créer le pack"
                   )}
                 </Button>
               </div>
@@ -703,7 +703,7 @@ export default function AdminPacksPage() {
             setCurrentPage(0)
           }}
         >
-          All
+          Tous
         </Button>
         <Button
           variant={packType === "pack" ? "default" : "outline"}
@@ -721,19 +721,19 @@ export default function AdminPacksPage() {
             setCurrentPage(0)
           }}
         >
-          Mock Exams
+          Examens Blancs
         </Button>
       </div>
 
       {/* University Filter */}
       <div className="flex gap-2 items-center">
-        <label className="text-sm font-medium text-muted-foreground">Filter by University:</label>
+        <label className="text-sm font-medium text-muted-foreground">Filtrer par université :</label>
         <Select value={selectedUniversityId} onValueChange={(value) => {
           setSelectedUniversityId(value)
           setCurrentPage(0)
         }}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="All Universities" />
+            <SelectValue placeholder="Toutes les universités" />
           </SelectTrigger>
           <SelectContent>
             {universities.map((uni) => (
@@ -749,7 +749,7 @@ export default function AdminPacksPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search packs..."
+          placeholder="Rechercher des packs..."
           className="pl-9"
           value={search}
           onChange={(e) => {
@@ -780,12 +780,12 @@ export default function AdminPacksPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Image</TableHead>
-                  <TableHead>Title</TableHead>
+                  <TableHead>Titre</TableHead>
                   <TableHead>Dates</TableHead>
-                  <TableHead>University</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Sales/Rating</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Université</TableHead>
+                  <TableHead>Prix</TableHead>
+                  <TableHead>Ventes/Note</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -793,7 +793,7 @@ export default function AdminPacksPage() {
                 {filteredPacks.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No packs found
+                      Aucun pack trouvé
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -813,7 +813,7 @@ export default function AdminPacksPage() {
                       <TableCell className="font-medium">
                         <div>{pack.title}</div>
                         <Badge variant={pack.type === "pack" ? "default" : "secondary"} className="text-[10px] h-4 mt-1">
-                          {pack.type === "pack" ? "Pack" : "Mock Exam"}
+                          {pack.type === "pack" ? "Pack" : "Examen Blanc"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs">
@@ -823,7 +823,7 @@ export default function AdminPacksPage() {
                       <TableCell>{pack.university_name || pack.university_id}</TableCell>
                       <TableCell>
                         <div className="font-semibold">{pack.price} {pack.currency}</div>
-                        <div className="text-xs text-muted-foreground">{pack.mcqs?.length || 0} MCQs</div>
+                        <div className="text-xs text-muted-foreground">{pack.mcqs?.length || 0} QCM</div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
@@ -839,7 +839,7 @@ export default function AdminPacksPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={pack.is_published ? "default" : "secondary"}>
-                          {pack.is_published ? "Published" : "Draft"}
+                          {pack.is_published ? "Publié" : "Brouillon"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -847,7 +847,7 @@ export default function AdminPacksPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            title="Visualiser Statistiques"
+                            title="Voir les statistiques"
                             onClick={() => handleViewStats(pack)}
                           >
                             <BarChart3 className="h-4 w-4" />
@@ -1000,7 +1000,7 @@ export default function AdminPacksPage() {
                           <TableCell>{new Date(p.purchased_at).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <Badge variant={p.gifted ? "secondary" : "outline"}>
-                              {p.gifted ? "Gifting" : "Achat"}
+                              {p.gifted ? "Cadeau" : "Achat"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
@@ -1080,7 +1080,7 @@ export default function AdminPacksPage() {
                       size="sm"
                       onClick={() => router.push(`/admin-dashboard/mcqs?search=${encodeURIComponent(mcq.title)}`)}
                     >
-                      <Edit2 className="mr-2 h-4 w-4" /> Modifier l'MCQ
+                      <Edit2 className="mr-2 h-4 w-4" /> Modifier le QCM
                     </Button>
                   </div>
                   <h3 className="text-xl font-semibold">{mcq.title}</h3>
@@ -1088,7 +1088,7 @@ export default function AdminPacksPage() {
                   <div className="grid gap-2 pt-2">
                     {/* Placeholder for options if needed in demo */}
                     <div className="text-sm italic text-muted-foreground p-3 border border-dashed rounded bg-background">
-                      Options and answers are hidden in demo list view. Use "Modifier" to see full details.
+                      Les options et les réponses sont masquées dans la vue en liste du mode démo. Utilisez "Modifier" pour voir tous les détails.
                     </div>
                   </div>
                 </div>

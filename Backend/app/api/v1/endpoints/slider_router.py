@@ -4,7 +4,7 @@ from app.core.database import get_db
 from app.models.slider import Slider
 from app.schemas.slider import SliderCreate, SliderUpdate, SliderOut
 from app.models.user import User
-from app.api.v1.endpoints.auth import get_current_user, require_admin, require_pack_creator
+from app.api.v1.endpoints.auth import get_optional_current_user, require_pack_creator
 
 router = APIRouter()
 
@@ -46,7 +46,7 @@ def update_slider(
 @router.get("/", response_model=list[SliderOut])
 def get_sliders(
     db: Session = Depends(get_db),
-    user: User | None = Depends(get_current_user)
+    user: User | None = Depends(get_optional_current_user)
 ):
     query = db.query(Slider)
     # If not a pack manager/admin, only show active ones

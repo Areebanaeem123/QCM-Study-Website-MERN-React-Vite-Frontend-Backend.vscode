@@ -65,36 +65,13 @@ export function useRequireAdmin() {
   return { isAdmin, isLoading }
 }
 
+import { useAuth } from "@/context/AuthContext"
+
 /**
  * Hook to get current user
  */
 export function useCurrentUser() {
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        if (!AuthService.isAuthenticated()) {
-          setUser(null)
-          return
-        }
-
-        const userData = await AuthService.getCurrentUser()
-        setUser(userData)
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch user")
-        setUser(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchUser()
-  }, [])
-
-  return { user, isLoading, error }
+  return useAuth()
 }
 
 /**

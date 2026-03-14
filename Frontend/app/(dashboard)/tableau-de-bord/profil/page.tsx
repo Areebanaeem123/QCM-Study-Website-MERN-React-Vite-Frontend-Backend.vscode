@@ -2,46 +2,139 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, Loader2, Camera } from "lucide-react"
+import { Eye, EyeOff, Loader2, Camera, User as UserIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import DashboardShell from "@/components/dashboard/dashboard-shell"
+import { AuthService } from "@/lib/auth-service"
+import { useRef } from "react"
+
 export default function ProfilePage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
+  const [isUploading, setIsUploading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [profileData, setProfileData] = useState({
-    firstName: "Alex",
-    lastName: "Dupont",
-    email: "alex.dupont@email.com",
-    phone: "+33 6 12 34 56 78",
-    address: "123 Rue de la Médecine, 75001 Paris",
-    university: "Université Paris Descartes",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    university: "",
+    civility: "",
+    date_of_birth: "",
+    country: "",
+    profilePicture: "",
   })
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await AuthService.getCurrentUser()
+        setProfileData({
+          firstName: user.first_name || "",
+          lastName: user.last_name || "",
+          email: user.email || "",
+          phone: user.phone_number || "",
+          address: user.address || "",
+          university: user.university || "",
+          civility: user.civility || "",
+          date_of_birth: user.date_of_birth || "",
+          country: user.country || "",
+          profilePicture: user.profile_picture || "",
+        })
+      } catch (error) {
+        console.error("Failed to fetch user:", error)
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données du profil.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsFetching(false)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const response = await AuthService.uploadProfilePicture(file)
+      const url = response.url
+      
+      // Update local state
+      setProfileData(prev => ({ ...prev, profilePicture: url }))
+      
+      // Persist to user profile
+      await AuthService.updateProfile({
+        profile_picture: url
+      })
+
+      toast({
+        title: "Photo mise à jour",
+        description: "Votre photo de profil a été mise à jour avec succès.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "L'envoi de l'image a échoué.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    toast({
-      title: "Profil mis à jour",
-      description: "Vos informations ont été enregistrées avec succès.",
-    })
+    try {
+      await AuthService.updateProfile({
+        first_name: profileData.firstName,
+        last_name: profileData.lastName,
+        phone_number: profileData.phone,
+        address: profileData.address,
+        university: profileData.university,
+        civility: profileData.civility,
+        date_of_birth: profileData.date_of_birth,
+        country: profileData.country,
+      })
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été enregistrées avec succès.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "La mise à jour du profil a échoué.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -55,13 +148,33 @@ export default function ProfilePage() {
       return
     }
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
-    toast({
-      title: "Mot de passe mis à jour",
-      description: "Votre mot de passe a été modifié avec succès.",
-    })
+    try {
+      await AuthService.updatePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      })
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+      toast({
+        title: "Mot de passe mis à jour",
+        description: "Votre mot de passe a été modifié avec succès.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "La mise à jour du mot de passe a échoué.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -75,12 +188,32 @@ export default function ProfilePage() {
       <Card>
         <CardContent className="flex flex-col items-center gap-4 pt-6 md:flex-row md:items-start">
           <div className="relative">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src="/student-avatar.png" />
-              <AvatarFallback className="text-2xl">AD</AvatarFallback>
+            <Avatar className="h-24 w-24 border-2 border-muted">
+              {profileData.profilePicture ? (
+                <AvatarImage src={profileData.profilePicture} className="object-cover" />
+              ) : (
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  <UserIcon className="h-10 w-10" />
+                </AvatarFallback>
+              )}
             </Avatar>
-            <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Camera className="h-4 w-4" />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+            <button 
+              onClick={handleImageClick}
+              disabled={isUploading}
+              className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 disabled:opacity-70"
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
             </button>
           </div>
           <div className="text-center md:text-left">

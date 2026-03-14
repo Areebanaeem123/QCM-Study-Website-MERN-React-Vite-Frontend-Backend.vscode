@@ -5,11 +5,14 @@ from app.models.user import User
 from app.models.mcq import MCQ
 from app.models.session import Session as StudySession
 from app.models.pack_purchase import PackPurchase
-from app.schemas.dashboard import DashboardStats
+from app.schemas.dashboard import DashboardStats, StudentDashboardStats
 from app.api.v1.endpoints.auth import get_current_user, require_admin
 
 from datetime import datetime, timedelta
 from app.models.pack_purchase import PackPurchase
+from app.models.pack import Pack
+from app.models.question_bank import QuestionBank
+from app.models.question_bank_purchase import QuestionBankPurchase
 from sqlalchemy import func
 
 router = APIRouter()
@@ -87,7 +90,7 @@ async def get_dashboard_stats(
 async def get_student_rankings(
     pack_id: str = None,
     mock_exam_id: str = None,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -170,3 +173,163 @@ async def get_recent_activity(
     activity_feed.sort(key=lambda x: x["timestamp"], reverse=True)
     
     return activity_feed[:20]
+
+@router.get("/student/stats", response_model=StudentDashboardStats)
+async def get_student_dashboard_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get student-specific dashboard statistics.
+    """
+    # 1. Fetch Purchased Packs & Question Banks
+    purchased_packs = []
+    purchases = []
+    qb_purchases = []
+    
+    # If user is admin (rank 5 or 6), they see everything published
+    if current_user.rank >= 5:
+        # Get all published packs
+        all_packs = db.query(Pack).filter(Pack.is_published == True).all()
+        for pack in all_packs:
+            # Efficiently get unique subjects for this pack
+            from app.models.subject import Subject
+            from app.models.mcq import MCQ
+            from app.models.pack_mcq import PackMCQ
+
+            subjects = db.query(Subject.id, Subject.name)\
+                         .join(MCQ, MCQ.subject_id == Subject.id)\
+                         .join(PackMCQ, PackMCQ.mcq_id == MCQ.id)\
+                         .filter(PackMCQ.pack_id == pack.id)\
+                         .distinct().all()
+            
+            pack_subjects = [{"id": str(s.id), "name": s.name} for s in subjects]
+
+            purchased_packs.append({
+                "id": str(pack.id),
+                "name": pack.title,
+                "type": pack.type,
+                "progress": 0,
+                "total_qcm": db.query(PackMCQ).filter(PackMCQ.pack_id == pack.id).count(),
+                "completed_qcm": 0,
+                "subjects": pack_subjects
+            })
+        
+        # Get all published question banks
+        all_qbs = db.query(QuestionBank).filter(QuestionBank.is_published == True).all()
+        for qb in all_qbs:
+            # Efficiently get unique subjects for this question bank
+            from app.models.question_bank_mcq import question_bank_mcqs
+            
+            subjects = db.query(Subject.id, Subject.name)\
+                         .join(MCQ, MCQ.subject_id == Subject.id)\
+                         .join(question_bank_mcqs, question_bank_mcqs.c.mcq_id == MCQ.id)\
+                         .filter(question_bank_mcqs.c.question_bank_id == qb.id)\
+                         .distinct().all()
+
+            qb_subjects = [{"id": str(s.id), "name": s.name} for s in subjects]
+
+            purchased_packs.append({
+                "id": str(qb.id),
+                "name": qb.title,
+                "type": "question_bank",
+                "progress": 0,
+                "total_qcm": len(qb.mcqs) if qb.mcqs else 0,
+                "completed_qcm": 0,
+                "subjects": qb_subjects
+            })
+    else:
+        # Regular student - Show all published items (as requested by user for visibility)
+        # 1. Packs & Mock Exams
+        all_packs = db.query(Pack).filter(Pack.is_published == True).all()
+        for pack in all_packs:
+            # Efficiently get unique subjects
+            from app.models.subject import Subject
+            from app.models.mcq import MCQ
+            from app.models.pack_mcq import PackMCQ
+
+            subjects = db.query(Subject.id, Subject.name)\
+                         .join(MCQ, MCQ.subject_id == Subject.id)\
+                         .join(PackMCQ, PackMCQ.mcq_id == MCQ.id)\
+                         .filter(PackMCQ.pack_id == pack.id)\
+                         .distinct().all()
+
+            pack_subjects = [{"id": str(s.id), "name": s.name} for s in subjects]
+
+            purchased_packs.append({
+                "id": str(pack.id),
+                "name": pack.title,
+                "type": pack.type,
+                "progress": 0,
+                "total_qcm": db.query(PackMCQ).filter(PackMCQ.pack_id == pack.id).count(),
+                "completed_qcm": 0,
+                "subjects": pack_subjects
+            })
+            
+        # 2. Question Banks
+        all_qbs = db.query(QuestionBank).filter(QuestionBank.is_published == True).all()
+        for qb in all_qbs:
+            # Efficiently get unique subjects
+            from app.models.question_bank_mcq import question_bank_mcqs
+            from app.models.subject import Subject
+            from app.models.mcq import MCQ
+
+            subjects = db.query(Subject.id, Subject.name)\
+                         .join(MCQ, MCQ.subject_id == Subject.id)\
+                         .join(question_bank_mcqs, question_bank_mcqs.c.mcq_id == MCQ.id)\
+                         .filter(question_bank_mcqs.c.question_bank_id == qb.id)\
+                         .distinct().all()
+
+            qb_subjects = [{"id": str(s.id), "name": s.name} for s in subjects]
+
+            purchased_packs.append({
+                "id": str(qb.id),
+                "name": qb.title,
+                "type": "question_bank",
+                "progress": 0,
+                "total_qcm": len(qb.mcqs) if qb.mcqs else 0,
+                "completed_qcm": 0,
+                "subjects": qb_subjects
+            })
+
+    # Fetch Recent Activity for this student
+    # (Existing activity logic remains same, but we use purchases list which might need to be re-queried if we want real activity)
+    # Re-query purchases for activity feed specifically
+    purchases = db.query(PackPurchase).filter(PackPurchase.student_id == current_user.id).all()
+    activity_feed = []
+    # Logins (latest only)
+    if current_user.last_login:
+        activity_feed.append({
+            "id": f"login-{current_user.id}",
+            "user_name": f"{current_user.first_name} {current_user.last_name}",
+            "type": "Connexion",
+            "timestamp": current_user.last_login.isoformat()
+        })
+    # Purchases
+    for p in purchases:
+        activity_feed.append({
+            "id": f"purchase-{p.id}",
+            "user_name": f"{current_user.first_name} {current_user.last_name}",
+            "type": "Achat de Pack",
+            "timestamp": p.purchased_at.isoformat()
+        })
+    
+    # Sort activity feed by timestamp descending
+    activity_feed.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    # 3. Stats Summary (Mostly mocked until full tracking is implemented)
+    # Average score and progression are placeholders
+    return StudentDashboardStats(
+        completed_mcqs=0,
+        average_score=0.0,
+        rank=0,
+        progression=0.0,
+        recent_activity=activity_feed[:10],
+        purchased_packs=purchased_packs,
+        category_performance=[
+            {"name": "Anatomie", "score": 0, "color": "bg-green-500"},
+            {"name": "Biochimie", "score": 0, "color": "bg-yellow-500"},
+            {"name": "Pharmacologie", "score": 0, "color": "bg-orange-500"},
+            {"name": "Physiologie", "score": 0, "color": "bg-blue-500"}
+        ]
+    )

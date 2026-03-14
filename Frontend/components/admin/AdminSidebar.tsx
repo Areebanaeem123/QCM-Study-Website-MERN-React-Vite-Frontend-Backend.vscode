@@ -14,17 +14,17 @@ const sidebarLinks = [
   { href: "/admin-dashboard/subjects", label: "Sujets", icon: BookOpen },
   { href: "/admin-dashboard/lessons", label: "Leçons", icon: GraduationCap },
   { href: "/admin-dashboard/question-types", label: "Types de Questions", icon: Layers },
-  { href: "/admin-dashboard/mcqs", label: "MCQs", icon: ClipboardCheck },
-  { href: "/admin-dashboard/mcq-approvals", label: "MCQ Approvals", icon: Play },
+  { href: "/admin-dashboard/mcqs", label: "QCM", icon: ClipboardCheck },
+  { href: "/admin-dashboard/mcq-approvals", label: "Approbations QCM", icon: Play },
   { href: "/admin-dashboard/approved-mcqs", label: "QCM Approuvés", icon: Eye },
   { href: "/admin-dashboard/packs", label: "Packs", icon: Package },
-  { href: "/admin-dashboard/mock-exams", label: "Mock Exams", icon: Play },
-  { href: "/admin-dashboard/question-banks", label: "Question Banks", icon: Book },
+  { href: "/admin-dashboard/mock-exams", label: "Examens Blancs", icon: Play },
+  { href: "/admin-dashboard/question-banks", label: "Banques de Questions", icon: Book },
   { href: "/admin-dashboard/sessions", label: "Sessions", icon: Clock },
-  { href: "/admin-dashboard/research", label: "Research", icon: Search },
-  { href: "/admin-dashboard/feedback", label: "Feedback", icon: MessageSquare },
-  { href: "/admin-dashboard/statistics", label: "Statistics", icon: BarChart2 },
-  { href: "/admin-dashboard/activity", label: "Recent Activity", icon: Clock },
+  { href: "/admin-dashboard/research", label: "Recherche", icon: Search },
+  { href: "/admin-dashboard/feedback", label: "Commentaires", icon: MessageSquare },
+  { href: "/admin-dashboard/statistics", label: "Statistiques", icon: BarChart2 },
+  { href: "/admin-dashboard/activity", label: "Activité Récente", icon: Clock },
   { href: "/admin-dashboard/pages", label: "Pages", icon: FileText },
   { href: "/admin-dashboard/sliders", label: "Sliders", icon: ImageIcon },
 ]
@@ -60,7 +60,7 @@ export function AdminSidebar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-foreground">
             <LayoutDashboard className="h-5 w-5 text-sidebar" />
           </div>
-          <span className="text-l font-bold" suppressHydrationWarning>Admin Dashboard</span>
+          <span className="text-l font-bold" suppressHydrationWarning>Tableau de bord Admin</span>
         </div>
 
         {/* Navigation */}

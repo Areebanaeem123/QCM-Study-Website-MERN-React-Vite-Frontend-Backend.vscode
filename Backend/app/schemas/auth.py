@@ -36,6 +36,16 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    civility: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    address: Optional[str] = None
+    country: Optional[str] = None
+    phone_number: Optional[str] = None
+    university: Optional[str] = None
+    academic_year: Optional[str] = None
+    profile_picture: Optional[str] = None
     rank: int
     created_at: datetime
 

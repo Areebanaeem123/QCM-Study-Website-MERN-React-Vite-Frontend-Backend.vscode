@@ -21,6 +21,7 @@ class User(Base):
     former_school = Column(String, nullable=True)
     university = Column(String, nullable=True)
     academic_year = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
 
     # Auth
     email = Column(String, unique=True, index=True, nullable=False)

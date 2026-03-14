@@ -1,8 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.schemas.auth import UserResponse
-from uuid import UUID
+
 class UniversityCreate(BaseModel):
     name: str
     is_displayed: bool = True
@@ -16,11 +15,10 @@ class UniversityResponse(BaseModel):
     name: str
     is_displayed: bool
     created_at: datetime
-    updated_at: Optional[datetime]
-    created_by: str
-    creator_name: Optional[str]
-    creator: Optional[UserResponse] = None
-    
+    updated_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    creator_name: Optional[str] = None
+
     class Config:
         from_attributes = True
 

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Search, University, BookOpen, ClipboardList } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, University, BookOpen, ClipboardList, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,16 +12,86 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { ApiClient } from "@/lib/api-client"
 
-const universities = [
-  "Université de Genève",
-  "Université de Lausanne",
-  "Université de Zurich",
-]
+interface UniversityData {
+  id: string
+  name: string
+  is_displayed: boolean
+}
+
+interface PackData {
+  id: string
+  title: string
+  description: string
+  price: number
+  currency: string
+}
+
+interface MockExamData {
+  id: string
+  title: string
+  description: string
+  price: number
+  currency: string
+  total_questions: number
+}
 
 export default function UniversitiesPage() {
-  const [selectedUniversity, setSelectedUniversity] = useState<string | null>(null)
+  const [universities, setUniversities] = useState<UniversityData[]>([])
+  const [selectedUniversity, setSelectedUniversity] = useState<UniversityData | null>(null)
   const [activeSection, setActiveSection] = useState<"mcq" | "exam" | null>(null)
+
+  const [packs, setPacks] = useState<PackData[]>([])
+  const [mockExams, setMockExams] = useState<MockExamData[]>([])
+
+  const [isLoadingUniversities, setIsLoadingUniversities] = useState(true)
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    fetchUniversities()
+  }, [])
+
+  const fetchUniversities = async () => {
+    setIsLoadingUniversities(true)
+    try {
+      const data = await ApiClient.get<UniversityData[]>("/universities/")
+      setUniversities(data.filter(u => u.is_displayed))
+    } catch (error) {
+      console.error("Failed to fetch universities", error)
+    } finally {
+      setIsLoadingUniversities(false)
+    }
+  }
+
+  const fetchUniversityDetails = async (universityId: string) => {
+    setIsLoadingDetails(true)
+    try {
+      const [packsData, examsData] = await Promise.all([
+        ApiClient.get<PackData[]>(`/packs?university_id=${universityId}`),
+        ApiClient.get<MockExamData[]>(`/mock_exams_admin?university_id=${universityId}`)
+      ])
+      setPacks(packsData)
+      setMockExams(examsData)
+    } catch (error) {
+      console.error("Failed to fetch university details", error)
+      setPacks([])
+      setMockExams([])
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  }
+
+  const handleUniversityClick = (uni: UniversityData) => {
+    setSelectedUniversity(uni)
+    setActiveSection(null)
+    fetchUniversityDetails(uni.id)
+  }
+
+  const filteredUniversities = universities.filter(u => 
+    u.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <section className="py-16 md:py-24">
@@ -42,24 +112,32 @@ export default function UniversitiesPage() {
           <Input
             placeholder="Rechercher une université"
             className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
         {/* University Buttons */}
         <div className="flex flex-wrap gap-4">
-          {universities.map((uni) => (
-            <Button
-              key={uni}
-              variant={selectedUniversity === uni ? "default" : "outline"}
-              onClick={() => {
-                setSelectedUniversity(uni)
-                setActiveSection(null)
-              }}
-            >
-              <University className="mr-2 h-4 w-4" />
-              {uni}
-            </Button>
-          ))}
+          {isLoadingUniversities ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Chargement des universités...</span>
+            </div>
+          ) : filteredUniversities.length > 0 ? (
+            filteredUniversities.map((uni) => (
+              <Button
+                key={uni.id}
+                variant={selectedUniversity?.id === uni.id ? "default" : "outline"}
+                onClick={() => handleUniversityClick(uni)}
+              >
+                <University className="mr-2 h-4 w-4" />
+                {uni.name}
+              </Button>
+            ))
+          ) : (
+            <p className="text-muted-foreground">Aucune université trouvée.</p>
+          )}
         </div>
 
         {/* Selected University */}
@@ -67,7 +145,7 @@ export default function UniversitiesPage() {
           <Card>
             <CardContent className="space-y-6 pt-6">
               <h2 className="text-xl font-semibold">
-                {selectedUniversity}
+                {selectedUniversity.name}
               </h2>
 
               {/* Filters */}
@@ -126,26 +204,62 @@ export default function UniversitiesPage() {
                 </Button>
               </div>
 
-              {/* Dummy Content */}
-              {activeSection === "mcq" && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold">Packs QCM disponibles</h3>
-                  <ul className="list-disc pl-5 text-muted-foreground">
-                    <li>Pack QCM – Anatomie (120 questions)</li>
-                    <li>Pack QCM – Physiologie (95 questions)</li>
-                    <li>Pack QCM – Pathologie (150 questions)</li>
-                  </ul>
+              {/* Dynamic Content */}
+              {isLoadingDetails && (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span>Chargement des détails...</span>
                 </div>
               )}
 
-              {activeSection === "exam" && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold">Examens blancs disponibles</h3>
-                  <ul className="list-disc pl-5 text-muted-foreground">
-                    <li>Examen blanc – Semestre 1</li>
-                    <li>Examen blanc – Semestre 2</li>
-                    <li>Examen final – Simulation complète</li>
-                  </ul>
+              {!isLoadingDetails && activeSection === "mcq" && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Packs QCM disponibles</h3>
+                  {packs.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {packs.map(pack => (
+                        <div key={pack.id} className="border rounded-lg p-4 flex flex-col justify-between">
+                          <div>
+                            <h4 className="font-semibold">{pack.title}</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{pack.description}</p>
+                          </div>
+                          <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                            <span className="font-medium">{pack.price} {pack.currency}</span>
+                            <Button size="sm">Acheter</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">Aucun pack disponible pour cette université.</p>
+                  )}
+                </div>
+              )}
+
+              {!isLoadingDetails && activeSection === "exam" && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Examens blancs disponibles</h3>
+                  {mockExams.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {mockExams.map(exam => (
+                        <div key={exam.id} className="border rounded-lg p-4 flex flex-col justify-between">
+                          <div>
+                            <h4 className="font-semibold">{exam.title}</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{exam.description}</p>
+                            <span className="text-xs bg-muted px-2 py-1 rounded-full mt-2 inline-block">
+                              {exam.total_questions} questions
+                            </span>
+                          </div>
+                          <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                            <span className="font-medium">{exam.price} {exam.currency}</span>
+                            <Button size="sm">Acheter</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">Aucun examen blanc disponible pour cette université.</p>
+                  )}
                 </div>
               )}
             </CardContent>

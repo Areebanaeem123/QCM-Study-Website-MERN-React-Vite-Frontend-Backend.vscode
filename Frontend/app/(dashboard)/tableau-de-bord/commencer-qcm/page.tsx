@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,13 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Play, Clock, BookOpen, Settings } from "lucide-react"
-import DashboardShell from "@/components/dashboard/dashboard-shell"
-// Dummy data for available packs
-const availablePacks = [
-  { id: 1, name: "Pack Médecine Essentiel", qcmCount: 2000 },
-  { id: 2, name: "Pack Pharmacie", qcmCount: 1500 },
-]
+import { DashboardService, PurchasedPack } from "@/lib/dashboard-service"
 
 const categories = [
   { id: "anatomie", name: "Anatomie", count: 450 },
@@ -23,18 +19,51 @@ const categories = [
   { id: "physiologie", name: "Physiologie", count: 290 },
 ]
 
+import { useProtectedRoute } from "@/lib/auth-hooks"
+
 export default function StartQCMPage() {
-  const [selectedPack, setSelectedPack] = useState("")
+  useProtectedRoute()
+  const searchParams = useSearchParams()
+  const packIdFromUrl = searchParams.get("pack")
+
+  const [availablePacks, setAvailablePacks] = useState<PurchasedPack[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const [selectedPack, setSelectedPack] = useState(packIdFromUrl || "")
+
+  // Auto-select pack if provided in URL
+  useEffect(() => {
+    if (packIdFromUrl) {
+      setSelectedPack(packIdFromUrl)
+    }
+  }, [packIdFromUrl])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [questionCount, setQuestionCount] = useState("20")
   const [mode, setMode] = useState("practice")
   const [timerEnabled, setTimerEnabled] = useState(false)
+
+  useEffect(() => {
+    async function fetchPacks() {
+      try {
+        const stats = await DashboardService.getStudentStats()
+        setAvailablePacks(stats.purchased_packs || [])
+      } catch (err) {
+        console.error("Failed to load student packs", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPacks()
+  }, [])
 
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
     )
   }
+
+  const currentPack = availablePacks.find((p) => p.id.toString() === selectedPack)
+  const displaySubjects = currentPack?.subjects || []
 
   const canStart = selectedPack && (selectedCategories.length > 0 || selectedPack)
 
@@ -65,7 +94,7 @@ export default function StartQCMPage() {
                 <SelectContent>
                   {availablePacks.map((pack) => (
                     <SelectItem key={pack.id} value={pack.id.toString()}>
-                      {pack.name} ({pack.qcmCount} QCM)
+                      {pack.name} ({pack.total_qcm} QCM)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -74,7 +103,7 @@ export default function StartQCMPage() {
           </Card>
 
           {/* Category Selection */}
-          {selectedPack && (
+          {selectedPack && displaySubjects.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-foreground" suppressHydrationWarning>Catégories</CardTitle>
@@ -82,7 +111,7 @@ export default function StartQCMPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {categories.map((cat) => (
+                  {displaySubjects.map((cat) => (
                     <div
                       key={cat.id}
                       className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
@@ -97,7 +126,6 @@ export default function StartQCMPage() {
                         />
                         <span className="text-foreground">{cat.name}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground" suppressHydrationWarning>{cat.count} QCM</span>
                     </div>
                   ))}
                 </div>

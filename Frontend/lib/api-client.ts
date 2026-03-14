@@ -20,15 +20,16 @@ interface ApiError {
 
 export class ApiClient {
   // Public endpoints that don't require authentication
-  static publicEndpoints = ["/auth/login", "/auth/register", "/auth/refresh"]
+  static publicEndpoints = ["/auth/login", "/auth/register", "/auth/refresh", "/universities/"]
 
   static async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+    const headers: Record<string, string> = {}
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json"
     }
 
     // Merge custom headers if provided
@@ -130,26 +131,32 @@ export class ApiClient {
           message: errorMessage,
           detail: data.detail || data,
         } as ApiError
-        console.error("API Error Response:", { status: response.status, url, errorObj, fullResponse: data })
+        
+        console.error(`[API] Error response from ${url}:`, {
+          status: response.status,
+          error: errorMessage,
+          data: data
+        })
         throw errorObj
       }
 
       return data as T
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      console.error(`[API] Request Error for ${url}:`, {
-        error: errorMsg,
-        type: error instanceof Error ? error.name : typeof error,
-        fullError: error,
-      })
-      if (error instanceof Error) {
-        throw {
-          status: 0,
-          message: error.message,
-        } as ApiError
+    } catch (error: any) {
+      // If it's already an ApiError (thrown above), just rethrow it
+      if (error && typeof error === 'object' && 'status' in error) {
+        throw error
       }
-      // If it's already an ApiError or similar, throw it
-      throw error
+
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      console.error(`[API] Request execution error for ${url}:`, {
+        message: errorMsg,
+        error: error
+      })
+      
+      throw {
+        status: 0,
+        message: errorMsg,
+      } as ApiError
     }
   }
 
@@ -162,25 +169,25 @@ export class ApiClient {
 
   static async post<T>(
     endpoint: string,
-    body?: unknown,
+    body?: any,
     options?: RequestInit
   ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
     })
   }
 
   static async put<T>(
     endpoint: string,
-    body?: unknown,
+    body?: any,
     options?: RequestInit
   ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: "PUT",
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
     })
   }
 

@@ -64,7 +64,7 @@ export default function UniversitiesPage() {
       const data = await AdminService.getUniversities()
       setUniversities(data)
     } catch (err: any) {
-      setError(err.message || "Failed to load universities")
+      setError(err.message || "Échec du chargement des universités")
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +72,7 @@ export default function UniversitiesPage() {
 
   const handleAddUniversity = async () => {
     if (!formName.trim()) {
-      setError("University name is required")
+      setError("Le nom de l'université est requis")
       return
     }
 
@@ -88,7 +88,7 @@ export default function UniversitiesPage() {
       setFormIsDisplayed(true)
       setAddDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to add university")
+      setError(err.message || "Échec de l'ajout de l'université")
     } finally {
       setIsSubmitting(false)
     }
@@ -97,7 +97,7 @@ export default function UniversitiesPage() {
   const handleEditUniversity = async () => {
     if (!editingUniversity) return
     if (!formName.trim()) {
-      setError("University name is required")
+      setError("Le nom de l'université est requis")
       return
     }
 
@@ -121,7 +121,7 @@ export default function UniversitiesPage() {
       setEditingUniversity(null)
       setEditDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to update university")
+      setError(err.message || "Échec de la mise à jour de l'université")
     } finally {
       setIsSubmitting(false)
     }
@@ -138,7 +138,7 @@ export default function UniversitiesPage() {
       setDeleteAlertOpen(false)
       setDeletingUniversity(null)
     } catch (err: any) {
-      setError(err.message || "Failed to delete university")
+      setError(err.message || "Échec de la suppression de l'université")
     } finally {
       setIsSubmitting(false)
     }
@@ -230,9 +230,9 @@ export default function UniversitiesPage() {
                         {university.is_displayed ? "Visible" : "Cachée"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{university.creator_name || "Unknown"}</TableCell>
+                    <TableCell>{university.creator_name || "Inconnu"}</TableCell>
                     <TableCell>
-                      {new Date(university.created_at).toLocaleDateString("en-US", {
+                      {new Date(university.created_at).toLocaleDateString("fr-FR", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",

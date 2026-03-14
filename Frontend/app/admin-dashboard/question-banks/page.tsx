@@ -223,7 +223,7 @@ export default function AdminQuestionBanksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.university_id || formData.mcq_ids.length === 0) {
-      setError("Please fill in all required fields (title, university) and select at least one MCQ")
+      setError("Veuillez remplir tous les champs obligatoires (titre, université) et sélectionner au moins un QCM")
       return
     }
 
@@ -288,7 +288,7 @@ export default function AdminQuestionBanksPage() {
   }
 
   const handleDelete = async (bankId: string) => {
-    if (!window.confirm("Are you sure you want to delete this question bank?")) return
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette banque de questions ?")) return
 
     try {
       await AdminService.deleteQuestionBank(bankId)
@@ -322,9 +322,9 @@ export default function AdminQuestionBanksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Question Banks</h2>
+          <h2 className="text-2xl font-bold">Banques de Questions</h2>
           <p className="text-muted-foreground">
-            Create and manage question bank collections
+            Créez et gérez les collections de banques de questions
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -337,12 +337,12 @@ export default function AdminQuestionBanksPage() {
           <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {editingBank ? "Edit Question Bank" : "Create Question Bank"}
+                {editingBank ? "Modifier la banque de questions" : "Créer une banque de questions"}
               </DialogTitle>
               <DialogDescription>
                 {editingBank
-                  ? "Update the question bank details below"
-                  : "Fill in the details to create a new question bank"}
+                  ? "Mettez à jour les détails de la banque de questions ci-dessous"
+                  : "Remplissez les détails pour créer une nouvelle banque de questions"}
               </DialogDescription>
             </DialogHeader>
 
@@ -356,14 +356,14 @@ export default function AdminQuestionBanksPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Title */}
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Titre *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  placeholder="e.g., Biology Fundamentals"
+                  placeholder="ex. Fondamentaux de la biologie"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export default function AdminQuestionBanksPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Describe this question bank..."
+                  placeholder="Décrivez cette banque de questions..."
                   rows={3}
                 />
               </div>
@@ -394,13 +394,13 @@ export default function AdminQuestionBanksPage() {
 
               {/* University */}
               <div>
-                <Label htmlFor="university">University *</Label>
+                <Label htmlFor="university">Université *</Label>
                 <Select
                   value={formData.university_id}
                   onValueChange={handleUniversityChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a university" />
+                    <SelectValue placeholder="Sélectionnez une université" />
                   </SelectTrigger>
                   <SelectContent>
                     {universities.map((u) => (
@@ -436,7 +436,7 @@ export default function AdminQuestionBanksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="currency">Currency</Label>
+                  <Label htmlFor="currency">Devise</Label>
                   <Select
                     value={formData.currency}
                     onValueChange={(value: any) =>
@@ -472,7 +472,7 @@ export default function AdminQuestionBanksPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="expiry_datetime">Available Until</Label>
+                  <Label htmlFor="expiry_datetime">Disponible jusqu'au</Label>
                   <Input
                     id="expiry_datetime"
                     type="datetime-local"

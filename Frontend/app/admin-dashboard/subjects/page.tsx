@@ -75,7 +75,7 @@ export default function SubjectsPage() {
       setSubjects(subjectsData)
       setUniversities(universitiesData)
     } catch (err: any) {
-      setError(err.message || "Failed to load data")
+      setError(err.message || "Échec du chargement des données")
     } finally {
       setIsLoading(false)
     }
@@ -83,11 +83,11 @@ export default function SubjectsPage() {
 
   const handleAddSubject = async () => {
     if (!formName.trim()) {
-      setError("Subject name is required")
+      setError("Le nom du sujet est requis")
       return
     }
     if (!formUniversityId) {
-      setError("University selection is required")
+      setError("La sélection de l'université est requise")
       return
     }
 
@@ -103,7 +103,7 @@ export default function SubjectsPage() {
       setFormUniversityId("")
       setAddDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to add subject")
+      setError(err.message || "Échec de l'ajout du sujet")
     } finally {
       setIsSubmitting(false)
     }
@@ -112,11 +112,11 @@ export default function SubjectsPage() {
   const handleEditSubject = async () => {
     if (!editingSubject) return
     if (!formName.trim()) {
-      setError("Subject name is required")
+      setError("Le nom du sujet est requis")
       return
     }
     if (!formUniversityId) {
-      setError("University selection is required")
+      setError("La sélection de l'université est requise")
       return
     }
 
@@ -140,7 +140,7 @@ export default function SubjectsPage() {
       setEditingSubject(null)
       setEditDialogOpen(false)
     } catch (err: any) {
-      setError(err.message || "Failed to update subject")
+      setError(err.message || "Échec de la mise à jour du sujet")
     } finally {
       setIsSubmitting(false)
     }
@@ -157,7 +157,7 @@ export default function SubjectsPage() {
       setDeleteAlertOpen(false)
       setDeletingSubject(null)
     } catch (err: any) {
-      setError(err.message || "Failed to delete subject")
+      setError(err.message || "Échec de la suppression du sujet")
     } finally {
       setIsSubmitting(false)
     }
@@ -176,7 +176,7 @@ export default function SubjectsPage() {
   }
 
   const getUniversityName = (universityId: string) => {
-    return universities.find((u) => u.id === universityId)?.name || "Unknown"
+    return universities.find((u) => u.id === universityId)?.name || "Inconnue"
   }
 
   const filteredSubjects = subjects.filter((s) =>
@@ -253,9 +253,9 @@ export default function SubjectsPage() {
                         {getUniversityName(subject.university_id)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{subject.creator_name || "Unknown"}</TableCell>
+                    <TableCell>{subject.creator_name || "Inconnu"}</TableCell>
                     <TableCell>
-                      {new Date(subject.created_at).toLocaleDateString("en-US", {
+                      {new Date(subject.created_at).toLocaleDateString("fr-FR", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",

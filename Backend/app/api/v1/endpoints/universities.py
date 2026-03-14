@@ -5,19 +5,25 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.university import University
 from app.schemas.university import UniversityCreate, UniversityUpdate, UniversityResponse
-from app.api.v1.endpoints.auth import require_admin
+from app.api.v1.endpoints.auth import require_admin, get_current_user
 
 
 router = APIRouter()
 #router for listing all universities
 @router.get("/", response_model=List[UniversityResponse])
 async def list_universities(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    db: Session = Depends(get_db)
 ):
-    """List all universities (admin only)."""
+    """List all universities (public)."""
+    print("[API] Fetching all universities")
     universities = db.query(University).order_by(University.created_at.desc()).all()
+    print(f"[API] Found {len(universities)} universities")
     return universities
+
+@router.get("/test-public")
+async def test_public():
+    """Test public endpoint."""
+    return {"status": "ok", "message": "This is a public endpoint"}
 
 
 #router for creating universities

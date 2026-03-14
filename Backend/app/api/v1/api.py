@@ -4,10 +4,8 @@ from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authorization"])
-api_router.include_router(admin.router, prefix="/admin", tags=["Admin Management"])
-api_router.include_router(mcq_approvals.router, prefix="/approvals", tags=["MCQ Approvals"])
-api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(universities.router, prefix="/universities", tags=["Universities"])
+api_router.include_router(admin.router, prefix="/admin", tags=["Admin Management"])
 api_router.include_router(subjects.router, prefix="/subjects",tags=["Subjects"])
 api_router.include_router(lesson.router, prefix="/lessons",tags=["Lessons"])
 api_router.include_router(question_type.router, prefix="/question_types",tags=["Question Types"])

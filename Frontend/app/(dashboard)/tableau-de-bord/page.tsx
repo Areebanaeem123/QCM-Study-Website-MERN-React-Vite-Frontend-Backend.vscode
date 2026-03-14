@@ -4,34 +4,47 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { BookOpen, Trophy, Target, TrendingUp, Play, Package } from "lucide-react"
-// Dummy data for purchased packs
-const purchasedPacks = [
-  { id: 1, name: "Pack Médecine Essentiel", progress: 65, totalQcm: 2000, completedQcm: 1300 },
-  { id: 2, name: "Pack Pharmacie", progress: 30, totalQcm: 1500, completedQcm: 450 },
-]
-
-// Dummy recent activity
-const recentActivity = [
-  { type: "QCM", title: "Anatomie - Système nerveux", score: 85, date: "Aujourd'hui" },
-  { type: "Examen", title: "Examen Blanc #3", score: 72, date: "Hier" },
-  { type: "QCM", title: "Biochimie - Métabolisme", score: 90, date: "Il y a 2 jours" },
-]
-
-// Performance by category
-const categoryPerformance = [
-  { name: "Anatomie", score: 85, color: "bg-green-500" },
-  { name: "Biochimie", score: 72, color: "bg-yellow-500" },
-  { name: "Pharmacologie", score: 68, color: "bg-orange-500" },
-  { name: "Physiologie", score: 78, color: "bg-blue-500" },
-]
+import { BookOpen, Trophy, Target, TrendingUp, Play, Package, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useCurrentUser } from "@/lib/auth-hooks"
+import { DashboardService, StudentDashboardStats } from "@/lib/dashboard-service"
 export default function DashboardPage() {
+  const { user } = useCurrentUser()
+  const [stats, setStats] = useState<StudentDashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await DashboardService.getStudentStats()
+        setStats(data)
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const purchasedPacks = stats?.purchased_packs || []
+  const recentActivity = stats?.recent_activity || []
+  const categoryPerformance = stats?.category_performance || []
+
   return (
     <div className="space-y-6" suppressHydrationWarning>
         {/* Welcome */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div suppressHydrationWarning>
-            <h1 className="text-2xl font-bold text-foreground md:text-3xl" suppressHydrationWarning>Bienvenue, Alex !</h1>
+            <h1 className="text-2xl font-bold text-foreground md:text-3xl" suppressHydrationWarning>Bienvenue, {user?.first_name || "Étudiant"} !</h1>
             <p className="text-muted-foreground" suppressHydrationWarning>Voici un aperçu de votre progression</p>
           </div>
           <div className="flex gap-3">
@@ -59,7 +72,7 @@ export default function DashboardPage() {
               </div>
               <div suppressHydrationWarning>
                 <p className="text-sm text-muted-foreground" suppressHydrationWarning>QCM Complétés</p>
-                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>1,750</p>
+                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>{stats?.completed_mcqs || 0}</p>
               </div>
             </CardContent>
           </Card>
@@ -70,7 +83,7 @@ export default function DashboardPage() {
               </div>
               <div suppressHydrationWarning>
                 <p className="text-sm text-muted-foreground" suppressHydrationWarning>Score Moyen</p>
-                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>76%</p>
+                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>{stats?.average_score || 0}%</p>
               </div>
             </CardContent>
           </Card>
@@ -81,7 +94,7 @@ export default function DashboardPage() {
               </div>
               <div suppressHydrationWarning>
                 <p className="text-sm text-muted-foreground" suppressHydrationWarning>Classement</p>
-                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>#42</p>
+                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>#{stats?.rank || "0"}</p>
               </div>
             </CardContent>
           </Card>
@@ -92,7 +105,7 @@ export default function DashboardPage() {
               </div>
               <div suppressHydrationWarning>
                 <p className="text-sm text-muted-foreground" suppressHydrationWarning>Progression</p>
-                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>+12%</p>
+                <p className="text-2xl font-bold text-foreground" suppressHydrationWarning>+{stats?.progression || 0}%</p>
               </div>
             </CardContent>
           </Card>
@@ -128,26 +141,29 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivity.map((activity, i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-border pb-3 last:border-0" suppressHydrationWarning>
+                {recentActivity.length > 0 ? recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between border-b border-border pb-3 last:border-0" suppressHydrationWarning>
                     <div suppressHydrationWarning>
-                      <p className="font-medium text-foreground" suppressHydrationWarning>{activity.title}</p>
-                      <p className="text-sm text-muted-foreground" suppressHydrationWarning>{activity.date}</p>
+                      <p className="font-medium text-foreground" suppressHydrationWarning>{activity.type}</p>
+                      <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+                        {new Date(activity.timestamp).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
                     </div>
                     <div
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${
-                        activity.score >= 80
-                          ? "bg-green-100 text-green-700"
-                          : activity.score >= 60
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
+                      className="rounded-full px-3 py-1 text-sm font-medium bg-primary/10 text-primary"
                       suppressHydrationWarning
                     >
-                      {activity.score}%
+                      Détails
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-center py-4 text-muted-foreground">Aucune activité récente</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -166,7 +182,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-foreground" suppressHydrationWarning>{pack.name}</h3>
                     <span className="text-sm text-muted-foreground" suppressHydrationWarning>
-                      {pack.completedQcm}/{pack.totalQcm} QCM
+                      {pack.completed_qcm}/{pack.total_qcm} QCM
                     </span>
                   </div>
                   <div className="mt-3 space-y-2">

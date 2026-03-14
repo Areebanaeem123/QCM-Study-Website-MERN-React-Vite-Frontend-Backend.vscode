@@ -92,7 +92,7 @@ export default function AdminMockExamsPage() {
       )
       setMockExams(response.items)
     } catch (err: any) {
-      setError(err.message || "Failed to load mock exams")
+      setError(err.message || "Échec du chargement des examens blancs")
     } finally {
       setLoading(false)
     }
@@ -142,7 +142,7 @@ export default function AdminMockExamsPage() {
       const response = await AdminService.getMCQsByLesson(lessonId, 0, 100)
       setAvailableMCQs(response.items)
     } catch (err: any) {
-      console.error("Failed to load MCQs")
+      console.error("Échec du chargement des QCM")
     }
   }
 
@@ -195,13 +195,13 @@ export default function AdminMockExamsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.university_id || formData.mcq_ids.length === 0 || !formData.time_limit_minutes) {
-      setError("Please fill in all required fields (title, university, time limit) and select at least one MCQ")
+      setError("Veuillez remplir tous les champs obligatoires (titre, université, limite de temps) et sélectionner au moins un QCM")
       return
     }
 
     // Validate datetime fields
     if (!formData.start_datetime || !formData.expiry_datetime) {
-      setError("Please fill in both start and expiry dates")
+      setError("Veuillez remplir les deux dates de début et d'expiration")
       return
     }
 
@@ -226,7 +226,7 @@ export default function AdminMockExamsPage() {
       setIsCreateDialogOpen(false)
       await loadMockExams()
     } catch (err: any) {
-      setError(err.message || "Failed to save mock exam")
+      setError(err.message || "Échec de l'enregistrement de l'examen blanc")
     } finally {
       setIsSubmitting(false)
     }
@@ -253,13 +253,13 @@ export default function AdminMockExamsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this mock exam?")) return
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet examen blanc ?")) return
 
     try {
       await AdminService.deleteMockExam(id)
       await loadMockExams()
     } catch (err: any) {
-      setError(err.message || "Failed to delete mock exam")
+      setError(err.message || "Échec de la suppression de l'examen blanc")
     }
   }
 
@@ -296,23 +296,23 @@ export default function AdminMockExamsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Mock Exams</h2>
+          <h2 className="text-2xl font-bold">Examens Blancs</h2>
           <p className="text-muted-foreground">
-            Create and manage mock exams for students
+            Créer et gérer les examens blancs pour les étudiants
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
               <Plus className="mr-2 h-4 w-4" />
-              New Mock Exam
+              Nouvel Examen Blanc
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>{editingExam ? "Edit Mock Exam" : "Create New Mock Exam"}</DialogTitle>
+              <DialogTitle>{editingExam ? "Modifier l'examen blanc" : "Créer un nouvel examen blanc"}</DialogTitle>
               <DialogDescription>
-                Create a mock exam by grouping MCQs together with a time limit
+                Créez un examen blanc en regroupant des QCM avec une limite de temps
               </DialogDescription>
             </DialogHeader>
             {error && (
@@ -323,12 +323,12 @@ export default function AdminMockExamsPage() {
             )}
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-4 space-y-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Titre *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Physics Final Mock Exam"
+                  placeholder="ex. Examen Blanc Final de Physique"
                   required
                 />
               </div>
@@ -339,7 +339,7 @@ export default function AdminMockExamsPage() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe this mock exam"
+                  placeholder="Décrivez cet examen blanc"
                   rows={3}
                 />
               </div>
@@ -355,10 +355,10 @@ export default function AdminMockExamsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="university">University *</Label>
+                  <Label htmlFor="university">Université *</Label>
                   <Select value={formData.university_id} onValueChange={handleUniversityChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select university" />
+                      <SelectValue placeholder="Sélectionnez une université" />
                     </SelectTrigger>
                     <SelectContent>
                       {universities.map((uni) => (
@@ -371,7 +371,7 @@ export default function AdminMockExamsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="timeLimit">Time Limit (minutes) *</Label>
+                  <Label htmlFor="timeLimit">Limite de temps (minutes) *</Label>
                   <Input
                     id="timeLimit"
                     type="number"
@@ -389,7 +389,7 @@ export default function AdminMockExamsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="price">Price *</Label>
+                  <Label htmlFor="price">Prix *</Label>
                   <Input
                     id="price"
                     type="number"
@@ -403,7 +403,7 @@ export default function AdminMockExamsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="currency">Currency *</Label>
+                  <Label htmlFor="currency">Devise *</Label>
                   <Select value={formData.currency} onValueChange={(value) =>
                     setFormData({ ...formData, currency: value as "CHF" | "GBP" | "USD" })
                   }>
@@ -419,7 +419,7 @@ export default function AdminMockExamsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Label htmlFor="startDate">Date de début *</Label>
                   <Input
                     id="startDate"
                     type="datetime-local"
@@ -430,7 +430,7 @@ export default function AdminMockExamsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="expiryDate">Expiry Date *</Label>
+                  <Label htmlFor="expiryDate">Date d'expiration *</Label>
                   <Input
                     id="expiryDate"
                     type="datetime-local"
@@ -450,7 +450,7 @@ export default function AdminMockExamsPage() {
                       setFormData({ ...formData, display_before_start: checked as boolean })
                     }
                   />
-                  <Label htmlFor="displayBefore">Display Before Start Date</Label>
+                  <Label htmlFor="displayBefore">Afficher avant la date de début</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -460,21 +460,21 @@ export default function AdminMockExamsPage() {
                       setFormData({ ...formData, is_published: checked as boolean })
                     }
                   />
-                  <Label htmlFor="publish">Publish Immediately</Label>
+                  <Label htmlFor="publish">Publier immédiatement</Label>
                 </div>
               </div>
 
               <div>
-                <Label>Select MCQs *</Label>
+                <Label>Sélectionner des QCM *</Label>
                 <div className="border rounded-md p-4 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="subjectSelect" className="text-sm">
-                        Subject
+                        Matière
                       </Label>
                       <Select value={selectedSubjectId} onValueChange={handleSubjectChange}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select subject" />
+                          <SelectValue placeholder="Sélectionnez une matière" />
                         </SelectTrigger>
                         <SelectContent>
                           {subjects.map((subject) => (
@@ -488,11 +488,11 @@ export default function AdminMockExamsPage() {
 
                     <div>
                       <Label htmlFor="lessonSelect" className="text-sm">
-                        Lesson
+                        Leçon
                       </Label>
                       <Select value={selectedLessonId} onValueChange={handleLessonChange}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select lesson" />
+                          <SelectValue placeholder="Sélectionnez une leçon" />
                         </SelectTrigger>
                         <SelectContent>
                           {lessons.map((lesson) => (
@@ -507,7 +507,7 @@ export default function AdminMockExamsPage() {
 
                   {availableMCQs.length > 0 && (
                     <div>
-                      <Label className="text-sm">Available MCQs</Label>
+                      <Label className="text-sm">QCM disponibles</Label>
                       <div className="h-40 border rounded-md p-2 overflow-y-auto">
                         <div className="space-y-1">
                           {availableMCQs.map((mcq) => (
@@ -539,7 +539,7 @@ export default function AdminMockExamsPage() {
 
                   {formData.mcq_ids.length > 0 && (
                     <div>
-                      <Label className="text-sm">Selected MCQs ({formData.mcq_ids.length})</Label>
+                      <Label className="text-sm">QCM sélectionnés ({formData.mcq_ids.length})</Label>
                       <div className="flex flex-wrap gap-2">
                         {formData.mcq_ids.map((mcqId) => {
                           const mcq = availableMCQs.find((m) => m.id === mcqId) ||
@@ -572,18 +572,18 @@ export default function AdminMockExamsPage() {
                   onClick={() => handleDialogOpenChange(false)}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  Annuler
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Enregistrement...
                     </>
                   ) : editingExam ? (
-                    "Update Mock Exam"
+                    "Mettre à jour l'examen blanc"
                   ) : (
-                    "Create Mock Exam"
+                    "Créer l'examen blanc"
                   )}
                 </Button>
               </div>
@@ -597,7 +597,7 @@ export default function AdminMockExamsPage() {
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search mock exams..."
+            placeholder="Rechercher des examens blancs..."
             className="pl-9"
             value={search}
             onChange={(e) => {
@@ -609,13 +609,13 @@ export default function AdminMockExamsPage() {
         
         {/* University Filter */}
         <div className="flex gap-2 items-center">
-          <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter by University:</label>
+          <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filtrer par université :</label>
           <Select value={selectedUniversityId} onValueChange={(value) => {
             setSelectedUniversityId(value)
             setCurrentPage(0)
           }}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="All Universities" />
+              <SelectValue placeholder="Toutes les universités" />
             </SelectTrigger>
             <SelectContent>
               {universities.map((uni) => (
@@ -649,12 +649,12 @@ export default function AdminMockExamsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Image</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>University</TableHead>
-                  <TableHead>Time Limit</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>MCQs</TableHead>
-                  <TableHead>Published</TableHead>
+                  <TableHead>Titre</TableHead>
+                  <TableHead>Université</TableHead>
+                  <TableHead>Limite de temps</TableHead>
+                  <TableHead>Prix</TableHead>
+                  <TableHead>QCM</TableHead>
+                  <TableHead>Publié</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -662,7 +662,7 @@ export default function AdminMockExamsPage() {
                 {(mockExams || []).length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No mock exams found
+                      Aucun examen blanc trouvé
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -682,7 +682,7 @@ export default function AdminMockExamsPage() {
                       <TableCell className="font-medium">{exam.title}</TableCell>
                       <TableCell>{exam.university_name || exam.university_id}</TableCell>
                       <TableCell>
-                        {exam.time_limit_minutes ? `${exam.time_limit_minutes} min` : "Unlimited"}
+                        {exam.time_limit_minutes ? `${exam.time_limit_minutes} min` : "Illimité"}
                       </TableCell>
                       <TableCell>
                         {exam.price} {exam.currency}
