@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -19,108 +19,67 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, XCircle, BookOpen } from "lucide-react"
+import { DashboardService } from "@/lib/dashboard-service"
 
-// Dummy questions
-const dummyQuestions = [
-  {
-    id: 1,
-    question: "L'artère carotide approvisionne principalement quelle région du corps ?",
-    options: [
-      { id: "a", text: "Artère carotide" },
-      { id: "b", text: "Artère fémorale" },
-      { id: "c", text: "Artère brachiale" },
-      { id: "d", text: "Artère poplitée" },
-    ],
-    correctAnswer: "a",
-    category: "Médecine",
-    subject: "Anatomie",
-    explanation:
-      "L'artère carotide est le principal vaisseau sanguin qui approvisionne le cerveau. Elle monte dans le cou et se divise en artère carotide interne (cerveau) et externe (face).",
-    reference: "Gray's Anatomy",
-  },
-  {
-    id: 2,
-    question: "Quel nerf innerve principalement le muscle quadriceps fémoral ?",
-    options: [
-      { id: "a", text: "Nerf sciatique" },
-      { id: "b", text: "Nerf fémoral" },
-      { id: "c", text: "Nerf obturateur" },
-      { id: "d", text: "Nerf tibial" },
-    ],
-    correctAnswer: "b",
-    category: "Médecine",
-    subject: "Anatomie",
-    explanation:
-      "Le nerf fémoral (L2-L4) innerve le muscle quadriceps fémoral, permettant l'extension du genou. C'est le principal nerf moteur de la loge antérieure de la cuisse.",
-    reference: "Netter's Atlas",
-  },
-  {
-    id: 3,
-    question: "Quelle enzyme catalyse la première réaction de la glycolyse ?",
-    options: [
-      { id: "a", text: "Phosphofructokinase" },
-      { id: "b", text: "Hexokinase" },
-      { id: "c", text: "Pyruvate kinase" },
-      { id: "d", text: "Aldolase" },
-    ],
-    correctAnswer: "b",
-    category: "Médecine",
-    subject: "Biochimie",
-    explanation:
-      "L'hexokinase catalyse la phosphorylation du glucose en glucose-6-phosphate, première étape de la glycolyse. Cette réaction est irréversible et consomme un ATP.",
-    reference: "Lehninger Biochemistry",
-  },
-  {
-    id: 4,
-    question: "Le coronaire supprime le niveau de quel organe ?",
-    options: [
-      { id: "a", text: "Cœur" },
-      { id: "b", text: "Poumons" },
-      { id: "c", text: "Foie" },
-      { id: "d", text: "Reins" },
-    ],
-    correctAnswer: "a",
-    category: "Médecine",
-    subject: "Physiologie",
-    explanation:
-      "Les artères coronaires sont les vaisseaux qui irriguent le muscle cardiaque (myocarde). Elles naissent de l'aorte juste au-dessus de la valve aortique.",
-    reference: "Guyton Physiology",
-  },
-  {
-    id: 5,
-    question: "Quel est le principal site de production de l'érythropoïétine ?",
-    options: [
-      { id: "a", text: "Foie" },
-      { id: "b", text: "Rate" },
-      { id: "c", text: "Reins" },
-      { id: "d", text: "Moelle osseuse" },
-    ],
-    correctAnswer: "c",
-    category: "Médecine",
-    subject: "Physiologie",
-    explanation:
-      "L'érythropoïétine (EPO) est principalement produite par les reins (90%) en réponse à l'hypoxie. Elle stimule la production de globules rouges dans la moelle osseuse.",
-    reference: "Harrison's Principles",
-  },
-]
+
 
 export default function QCMSessionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const packId = searchParams.get("pack")
+  const questionBankId = searchParams.get("question_bank")
+  const mockExamId = searchParams.get("mock_exam")
+  const questionCount = parseInt(searchParams.get("questions") || "20")
+  const timerEnabled = searchParams.get("timer") === "true"
+
+  const [questions, setQuestions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<number, string>>({})
-  const [flaggedQuestions, setFlaggedQuestions] = useState<number[]>([])
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [flaggedQuestions, setFlaggedQuestions] = useState<string[]>([])
   const [showCorrection, setShowCorrection] = useState(false)
   const [showExitDialog, setShowExitDialog] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(300) // 5 minutes for demo
+  const [timeRemaining, setTimeRemaining] = useState(300) 
   const [isFinished, setIsFinished] = useState(false)
 
-  const questions = dummyQuestions
+  // Fetch Questions
+  useEffect(() => {
+    async function loadQuestions() {
+      try {
+        setLoading(true)
+        const data = await DashboardService.getSessionQuestions({
+          pack_id: packId || undefined,
+          question_bank_id: questionBankId || undefined,
+          mock_exam_id: mockExamId || undefined
+        })
+        
+        // Take only the requested amount
+        const sliced = data.slice(0, questionCount)
+        setQuestions(sliced)
+        
+        // Adjust timer if enabled
+        if (timerEnabled) {
+          setTimeRemaining(sliced.length * 60)
+        } else {
+          setTimeRemaining(3600 * 2) // 2 hours default for practice
+        }
+      } catch (err: any) {
+        console.error("Failed to load questions", err)
+        setError(err.message || "Impossible de charger les questions")
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadQuestions()
+  }, [packId, questionBankId, mockExamId, questionCount, timerEnabled])
+
   const currentQuestion = questions[currentQuestionIndex]
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100
+  const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0
 
   // Timer
   useEffect(() => {
-    if (isFinished || timeRemaining <= 0) return
+    if (isFinished || timeRemaining <= 0 || loading) return
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -133,7 +92,7 @@ export default function QCMSessionPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [isFinished, timeRemaining])
+  }, [isFinished, timeRemaining, loading])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -142,10 +101,12 @@ export default function QCMSessionPage() {
   }
 
   const handleAnswer = (value: string) => {
+    if (!currentQuestion) return
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
   }
 
   const toggleFlag = () => {
+    if (!currentQuestion) return
     setFlaggedQuestions((prev) =>
       prev.includes(currentQuestion.id)
         ? prev.filter((id) => id !== currentQuestion.id)
@@ -176,26 +137,86 @@ export default function QCMSessionPage() {
     setShowCorrection(true)
   }
 
-  const finishExam = useCallback(() => {
+  const finishExam = useCallback(async () => {
     setIsFinished(true)
     // Calculate score
     let correct = 0
+    const processedResponses: any[] = []
+
     questions.forEach((q) => {
-      if (answers[q.id] === q.correctAnswer) correct++
+      const correctOption = q.options.find((o: any) => o.is_correct)
+      const isCorrect = answers[q.id] === correctOption?.id
+      if (isCorrect) correct++
+      
+      processedResponses.push({
+        mcq_id: q.id,
+        selected_option_id: answers[q.id] || null,
+        is_correct: isCorrect
+      })
     })
-    const score = Math.round((correct / questions.length) * 100)
+
+    const score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
+    
+    // Submit to backend
+    try {
+      await DashboardService.submitQuizResult({
+        pack_id: packId || undefined,
+        question_bank_id: questionBankId || undefined,
+        mock_exam_id: mockExamId || undefined,
+        score: score,
+        total_questions: questions.length,
+        correct_answers: correct,
+        mode: timerEnabled ? "exam" : "practice",
+        time_taken: (timerEnabled ? (questions.length * 60) - timeRemaining : 3600*2 - timeRemaining),
+        responses: processedResponses
+      })
+    } catch (err) {
+      console.error("Failed to save results:", err)
+    }
+
     router.push(`/qcm/resultats?score=${score}&correct=${correct}&total=${questions.length}`)
-  }, [answers, questions, router])
+  }, [answers, questions, router, packId, questionBankId, mockExamId, timerEnabled, timeRemaining])
 
   // Auto-finish when time runs out
   useEffect(() => {
-    if (timeRemaining <= 0 && !isFinished) {
+    if (timeRemaining <= 0 && !isFinished && !loading && questions.length > 0) {
       finishExam()
     }
-  }, [timeRemaining, isFinished, finishExam])
+  }, [timeRemaining, isFinished, finishExam, loading, questions.length])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+          <p className="text-muted-foreground">Chargement de votre session...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || (questions.length === 0 && !loading)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center space-y-4">
+            <XCircle className="h-12 w-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-bold">Erreur de chargement</h2>
+            <p className="text-muted-foreground">
+              {error || "Ce pack ne contient aucune question pour le moment ou vous n'avez pas les droits nécessaires."}
+            </p>
+            <Button onClick={() => router.push("/tableau-de-bord/commencer-qcm")}>
+              Retourner à la sélection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const selectedAnswer = answers[currentQuestion.id]
-  const isCorrect = selectedAnswer === currentQuestion.correctAnswer
+  const correctOption = currentQuestion.options.find((o: any) => o.is_correct)
+  const isCorrect = selectedAnswer === correctOption?.id
 
   return (
     <div className="min-h-screen bg-muted/30" suppressHydrationWarning>
@@ -207,8 +228,8 @@ export default function QCMSessionPage() {
               Quitter
             </Button>
             <div className="hidden md:flex items-center gap-2">
-              <Badge variant="secondary">{currentQuestion.category}</Badge>
-              <Badge variant="outline">{currentQuestion.subject}</Badge>
+              <Badge variant="secondary">{currentQuestion.subject_name || "Général"}</Badge>
+              <Badge variant="outline">{currentQuestion.lesson_name || "QCM"}</Badge>
             </div>
           </div>
 
@@ -294,16 +315,16 @@ export default function QCMSessionPage() {
                 </div>
 
                 {/* Question Text */}
-                <h2 className="mb-6 text-xl font-semibold text-foreground">{currentQuestion.question}</h2>
+                <h2 className="mb-6 text-xl font-semibold text-foreground">{currentQuestion.question_text}</h2>
 
                 {/* Options */}
                 <RadioGroup value={selectedAnswer || ""} onValueChange={handleAnswer} className="space-y-3">
-                  {currentQuestion.options.map((option) => {
+                  {currentQuestion.options.map((option: any) => {
                     let optionClass = "border-border"
                     if (showCorrection) {
-                      if (option.id === currentQuestion.correctAnswer) {
+                      if (option.is_correct) {
                         optionClass = "border-green-500 bg-green-50"
-                      } else if (option.id === selectedAnswer && option.id !== currentQuestion.correctAnswer) {
+                      } else if (option.id === selectedAnswer && !option.is_correct) {
                         optionClass = "border-red-500 bg-red-50"
                       }
                     } else if (selectedAnswer === option.id) {
@@ -317,15 +338,14 @@ export default function QCMSessionPage() {
                       >
                         <RadioGroupItem value={option.id} id={option.id} disabled={showCorrection} />
                         <Label htmlFor={option.id} className="flex-1 cursor-pointer text-foreground">
-                          <span className="mr-2 font-medium uppercase">{option.id}.</span>
-                          {option.text}
+                          {option.option_text}
                         </Label>
-                        {showCorrection && option.id === currentQuestion.correctAnswer && (
+                        {showCorrection && option.is_correct && (
                           <CheckCircle className="h-5 w-5 text-green-500" />
                         )}
                         {showCorrection &&
                           option.id === selectedAnswer &&
-                          option.id !== currentQuestion.correctAnswer && <XCircle className="h-5 w-5 text-red-500" />}
+                          !option.is_correct && <XCircle className="h-5 w-5 text-red-500" />}
                       </div>
                     )
                   })}
@@ -347,14 +367,18 @@ export default function QCMSessionPage() {
                       </span>
                     </div>
                     <div className="space-y-3">
-                      <div>
-                        <h4 className="font-medium text-foreground">Explication</h4>
-                        <p className="text-sm text-muted-foreground">{currentQuestion.explanation}</p>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Référence: {currentQuestion.reference}</span>
-                      </div>
+                      {correctOption?.explanation && (
+                        <div>
+                          <h4 className="font-medium text-foreground">Explication</h4>
+                          <p className="text-sm text-muted-foreground">{correctOption.explanation}</p>
+                        </div>
+                      )}
+                      {currentQuestion.reference && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <BookOpen className="h-4 w-4" />
+                          <span>Référence: {currentQuestion.reference}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

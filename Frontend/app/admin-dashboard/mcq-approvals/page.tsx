@@ -249,7 +249,7 @@ export default function MCQApprovalsPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-FR")
+    return new Date(dateString).toLocaleDateString("en-US")
   }
 
   const totalPages = pendingMCQsData
@@ -273,9 +273,9 @@ export default function MCQApprovalsPage() {
       <div className="space-y-6">
         {/* Title */}
         <div>
-          <h2 className="text-2xl font-bold">Approbation des QCM</h2>
+          <h2 className="text-2xl font-bold">MCQ Approvals</h2>
           <p className="text-muted-foreground">
-            Examinez et approuvez les QCM en attente.
+            Review and approve pending MCQs.
           </p>
         </div>
 
@@ -290,7 +290,7 @@ export default function MCQApprovalsPage() {
         {/* Pending MCQs Table */}
         <div className="rounded-lg border bg-card p-6">
           <h3 className="text-lg font-semibold mb-6">
-            Files d'attente ({pendingMCQsData?.total || 0} QCM)
+            Queue ({pendingMCQsData?.total || 0} QCM)
           </h3>
 
           {isLoading ? (
@@ -324,7 +324,7 @@ export default function MCQApprovalsPage() {
                           <TableCell>
                             <div className="font-medium">{mcq.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              Par: {getCreatorName(mcq)}
+                              By: {getCreatorName(mcq)}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -342,7 +342,7 @@ export default function MCQApprovalsPage() {
                               className="gap-1"
                             >
                               <Eye className="h-4 w-4" />
-                              Aperçu
+                              Preview
                             </Button>
                             <Button
                               size="sm"
@@ -352,7 +352,7 @@ export default function MCQApprovalsPage() {
                               className="gap-1"
                             >
                               <Edit2 className="h-4 w-4" />
-                              Éditer
+                              Edit
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -377,7 +377,7 @@ export default function MCQApprovalsPage() {
                       className="gap-2"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Précédent
+                      Previous
                     </Button>
                     <Button
                       variant="outline"
@@ -386,7 +386,7 @@ export default function MCQApprovalsPage() {
                       disabled={currentPage >= totalPages - 1 || isLoading}
                       className="gap-2"
                     >
-                      Suivant
+                      Next
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -456,7 +456,7 @@ export default function MCQApprovalsPage() {
                     <p className="font-medium">{option.option_text}</p>
                     {option.explanation && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        Explication: {option.explanation}
+                        Explanation: {option.explanation}
                       </p>
                     )}
                   </div>
@@ -494,7 +494,7 @@ export default function MCQApprovalsPage() {
                 className="gap-2"
               >
                 <Edit2 className="h-4 w-4" />
-                Modifier
+                Edit
               </Button>
             </div>
             <div className="flex gap-2">
@@ -505,7 +505,7 @@ export default function MCQApprovalsPage() {
                 className="gap-2"
               >
                 <X className="h-4 w-4" />
-                Rejeter
+                Reject
               </Button>
               <Button
                 onClick={handleApprove}
@@ -519,7 +519,7 @@ export default function MCQApprovalsPage() {
                     <Check className="h-4 w-4" />
                   )}
                 </span>
-                Approuver
+                Approve
               </Button>
             </div>
           </div>
@@ -586,7 +586,7 @@ export default function MCQApprovalsPage() {
         )}
 
         <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-6">Modifier le QCM</h3>
+          <h3 className="text-lg font-semibold mb-6">Éditer le QCM</h3>
 
           <div className="space-y-4">
             {/* Title */}
@@ -626,7 +626,7 @@ export default function MCQApprovalsPage() {
                           setFormOptions(updated)
                         }}
                       />
-                      <span className="text-sm font-medium">Correcte</span>
+                      <span className="text-sm font-medium">Correct</span>
                     </div>
                     <Input
                       className="mb-2"
@@ -645,7 +645,7 @@ export default function MCQApprovalsPage() {
                         updated[idx].explanation = e.target.value
                         setFormOptions(updated)
                       }}
-                      placeholder="Explication (optionnel)"
+                      placeholder="Explication (optionnelle)"
                       className="text-sm min-h-16"
                     />
                   </div>

@@ -11,14 +11,6 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Play, Clock, BookOpen, Settings } from "lucide-react"
 import { DashboardService, PurchasedPack } from "@/lib/dashboard-service"
-
-const categories = [
-  { id: "anatomie", name: "Anatomie", count: 450 },
-  { id: "biochimie", name: "Biochimie", count: 380 },
-  { id: "pharmacologie", name: "Pharmacologie", count: 320 },
-  { id: "physiologie", name: "Physiologie", count: 290 },
-]
-
 import { useProtectedRoute } from "@/lib/auth-hooks"
 
 export default function StartQCMPage() {
@@ -37,6 +29,7 @@ export default function StartQCMPage() {
       setSelectedPack(packIdFromUrl)
     }
   }, [packIdFromUrl])
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [questionCount, setQuestionCount] = useState("20")
   const [mode, setMode] = useState("practice")
@@ -56,6 +49,8 @@ export default function StartQCMPage() {
     fetchPacks()
   }, [])
 
+  // No hardcoded categories here anymore - using pack subjects
+
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
@@ -65,7 +60,8 @@ export default function StartQCMPage() {
   const currentPack = availablePacks.find((p) => p.id.toString() === selectedPack)
   const displaySubjects = currentPack?.subjects || []
 
-  const canStart = selectedPack && (selectedCategories.length > 0 || selectedPack)
+  // Can start if a pack is selected. If they haven't purchased any, availablePacks will be empty.
+  const canStart = selectedPack && availablePacks.length > 0
 
   return (
     <div className="space-y-6" suppressHydrationWarning>

@@ -20,6 +20,7 @@ from app.models.question_bank_review import QuestionBankReview
 from app.models.question_bank import QuestionBank
 from app.models.pack_purchase import PackPurchase
 from app.models.pack_review import PackReview
+from app.models.result import QuizAttempt, QuizResponse
 from app.models.page import Page 
 from app.models.slider import Slider
 __all__ = ["User", 
@@ -44,6 +45,8 @@ __all__ = ["User",
 "QuestionBank",
 "PackPurchase",
 "PackReview",
+"QuizAttempt",
+"QuizResponse",
 "Page",
 "Slider"
 ]

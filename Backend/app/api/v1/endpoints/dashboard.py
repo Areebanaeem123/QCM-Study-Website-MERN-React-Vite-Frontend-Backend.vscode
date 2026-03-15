@@ -239,11 +239,14 @@ async def get_student_dashboard_stats(
                 "subjects": qb_subjects
             })
     else:
-        # Regular student - Show all published items (as requested by user for visibility)
-        # 1. Packs & Mock Exams
-        all_packs = db.query(Pack).filter(Pack.is_published == True).all()
-        for pack in all_packs:
-            # Efficiently get unique subjects
+        # Regular student - Only show items they have actually purchased
+        # 1. Fetch Pack Purchases (includes "pack" and "mock_exam" types)
+        purchases = db.query(PackPurchase).filter(PackPurchase.student_id == current_user.id).all()
+        for p in purchases:
+            pack = p.pack
+            if not pack or not pack.is_published:
+                continue
+                
             from app.models.subject import Subject
             from app.models.mcq import MCQ
             from app.models.pack_mcq import PackMCQ
@@ -266,10 +269,13 @@ async def get_student_dashboard_stats(
                 "subjects": pack_subjects
             })
             
-        # 2. Question Banks
-        all_qbs = db.query(QuestionBank).filter(QuestionBank.is_published == True).all()
-        for qb in all_qbs:
-            # Efficiently get unique subjects
+        # 2. Fetch Question Bank Purchases
+        qb_purchases = db.query(QuestionBankPurchase).filter(QuestionBankPurchase.user_id == current_user.id).all()
+        for qp in qb_purchases:
+            qb = qp.question_bank
+            if not qb or not qb.is_published:
+                continue
+                
             from app.models.question_bank_mcq import question_bank_mcqs
             from app.models.subject import Subject
             from app.models.mcq import MCQ
@@ -317,19 +323,45 @@ async def get_student_dashboard_stats(
     # Sort activity feed by timestamp descending
     activity_feed.sort(key=lambda x: x["timestamp"], reverse=True)
 
-    # 3. Stats Summary (Mostly mocked until full tracking is implemented)
-    # Average score and progression are placeholders
+    # 3. Stats Summary (Real data from QuizAttempts)
+    from app.models.result import QuizAttempt
+    
+    # Total completed MCQs (sum of total_questions in all attempts or sum of correct_answers? Usually total_questions means how many were answered)
+    completed_mcqs = db.query(func.sum(QuizAttempt.total_questions))\
+                       .filter(QuizAttempt.user_id == current_user.id).scalar() or 0
+    
+    # Average score
+    avg_score = db.query(func.avg(QuizAttempt.score))\
+                  .filter(QuizAttempt.user_id == current_user.id).scalar() or 0.0
+    
+    # Recent attempts for activity feed
+    recent_attempts = db.query(QuizAttempt)\
+                        .filter(QuizAttempt.user_id == current_user.id)\
+                        .order_by(QuizAttempt.created_at.desc())\
+                        .limit(5).all()
+    
+    for attempt in recent_attempts:
+        activity_feed.append({
+            "id": f"attempt-{attempt.id}",
+            "user_name": f"{current_user.first_name} {current_user.last_name}",
+            "type": f"QCM Complété ({int(attempt.score)}%)",
+            "timestamp": attempt.created_at.isoformat()
+        })
+    
+    # Re-sort with new activity
+    activity_feed.sort(key=lambda x: x["timestamp"], reverse=True)
+
     return StudentDashboardStats(
-        completed_mcqs=0,
-        average_score=0.0,
-        rank=0,
+        completed_mcqs=int(completed_mcqs),
+        average_score=float(round(avg_score, 1)),
+        rank=0, # Rank tracking not implemented yet
         progression=0.0,
         recent_activity=activity_feed[:10],
         purchased_packs=purchased_packs,
         category_performance=[
-            {"name": "Anatomie", "score": 0, "color": "bg-green-500"},
-            {"name": "Biochimie", "score": 0, "color": "bg-yellow-500"},
-            {"name": "Pharmacologie", "score": 0, "color": "bg-orange-500"},
-            {"name": "Physiologie", "score": 0, "color": "bg-blue-500"}
+            {"name": "Anatomy", "score": 0, "color": "bg-green-500"},
+            {"name": "Biochemistry", "score": 0, "color": "bg-yellow-500"},
+            {"name": "Pharmacology", "score": 0, "color": "bg-orange-500"},
+            {"name": "Physiology", "score": 0, "color": "bg-blue-500"}
         ]
     )

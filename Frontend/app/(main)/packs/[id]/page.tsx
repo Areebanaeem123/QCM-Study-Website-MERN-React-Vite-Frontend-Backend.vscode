@@ -1,48 +1,53 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { CheckCircle, BookOpen, Clock, Users, Award, ArrowLeft, ShoppingCart } from "lucide-react"
-
-// Dummy pack data
-const packDetails = {
-  id: 1,
-  title: "Pack Médecine Essentiel",
-  description:
-    "Le Pack Médecine Essentiel est conçu pour les étudiants en première année de médecine. Il couvre les fondamentaux de la médecine avec plus de 2000 QCM validés par des professionnels de santé.",
-  qcmCount: 2000,
-  category: "Médecine",
-  level: "Débutant",
-  price: 49,
-  originalPrice: 69,
-  duration: "12 mois",
-  studentsCount: 3500,
-  rating: 4.8,
-  features: [
-    "Biochimie fondamentale - 500 QCM",
-    "Anatomie générale - 600 QCM",
-    "Histologie de base - 400 QCM",
-    "Physiologie - 300 QCM",
-    "Embryologie - 200 QCM",
-  ],
-  includes: [
-    "Accès illimité pendant 12 mois",
-    "Corrections détaillées pour chaque question",
-    "Statistiques de progression",
-    "Mode examen chronométré",
-    "Accès sur tous vos appareils",
-    "Mises à jour régulières du contenu",
-  ],
-  modules: [
-    { name: "Biochimie fondamentale", qcm: 500, description: "Glucides, lipides, protéines, enzymes" },
-    { name: "Anatomie générale", qcm: 600, description: "Ostéologie, myologie, système nerveux" },
-    { name: "Histologie de base", qcm: 400, description: "Tissus épithéliaux, conjonctifs, musculaires" },
-    { name: "Physiologie", qcm: 300, description: "Systèmes cardiovasculaire, respiratoire, digestif" },
-    { name: "Embryologie", qcm: 200, description: "Développement embryonnaire, organogenèse" },
-  ],
-}
+import { CheckCircle, BookOpen, Clock, Users, Award, ArrowLeft, ShoppingCart, Loader2 } from "lucide-react"
+import { useParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { DashboardService, StorePack } from "@/lib/dashboard-service"
 
 export default function PackDetailPage() {
+  const params = useParams()
+  const packId = params.id as string
+  const [pack, setPack] = useState<StorePack | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPack = async () => {
+      try {
+        const data = await DashboardService.getPackById(packId)
+        setPack(data)
+      } catch (error) {
+        console.error("Error fetching pack:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    if (packId) fetchPack()
+  }, [packId])
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!pack) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold">Pack non trouvé</h1>
+        <Button asChild className="mt-4">
+          <Link href="/packs">Retour aux packs</Link>
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="py-12" suppressHydrationWarning>
       <div className="container mx-auto px-4">
@@ -60,65 +65,37 @@ export default function PackDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Badge>{packDetails.category}</Badge>
-                <Badge variant="outline">{packDetails.level}</Badge>
+                <Badge>Général</Badge>
+                <Badge variant="outline">Accès illimité</Badge>
               </div>
-              <h1 className="text-3xl font-bold text-foreground md:text-4xl">{packDetails.title}</h1>
-              <p className="mt-4 text-lg text-muted-foreground">{packDetails.description}</p>
+              <h1 className="text-3xl font-bold text-foreground md:text-4xl">{pack.title}</h1>
+              <p className="mt-4 text-lg text-muted-foreground">{pack.description || "Aucune description disponible pour ce pack."}</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               <Card>
                 <CardContent className="flex flex-col items-center p-4">
                   <BookOpen className="h-6 w-6 text-primary mb-2" />
-                  <span className="text-2xl font-bold text-foreground">{packDetails.qcmCount}</span>
-                  <span className="text-sm text-muted-foreground">QCM</span>
+                  <span className="text-2xl font-bold text-foreground">{pack.mcqs?.length || 0}</span>
+                  <span className="text-sm text-muted-foreground">QCM inclus</span>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="flex flex-col items-center p-4">
                   <Clock className="h-6 w-6 text-primary mb-2" />
-                  <span className="text-2xl font-bold text-foreground">{packDetails.duration}</span>
+                  <span className="text-2xl font-bold text-foreground">12 mois</span>
                   <span className="text-sm text-muted-foreground">Accès</span>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="flex flex-col items-center p-4">
-                  <Users className="h-6 w-6 text-primary mb-2" />
-                  <span className="text-2xl font-bold text-foreground">{packDetails.studentsCount}</span>
-                  <span className="text-sm text-muted-foreground">Étudiants</span>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="flex flex-col items-center p-4">
                   <Award className="h-6 w-6 text-primary mb-2" />
-                  <span className="text-2xl font-bold text-foreground">{packDetails.rating}/5</span>
-                  <span className="text-sm text-muted-foreground">Note</span>
+                  <span className="text-2xl font-bold text-foreground">4.5/5</span>
+                  <span className="text-sm text-muted-foreground">Note moyenne</span>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Modules */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-foreground">Modules inclus</CardTitle>
-                <CardDescription>Détail du contenu du pack</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {packDetails.modules.map((module, i) => (
-                    <div key={i} className="flex items-start justify-between border-b border-border pb-4 last:border-0">
-                      <div>
-                        <h4 className="font-medium text-foreground">{module.name}</h4>
-                        <p className="text-sm text-muted-foreground">{module.description}</p>
-                      </div>
-                      <Badge variant="secondary">{module.qcm} QCM</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* What's included */}
             <Card>
@@ -127,15 +104,32 @@ export default function PackDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="grid gap-3 md:grid-cols-2">
-                  {packDetails.includes.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-foreground">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      {item}
-                    </li>
-                  ))}
+                  <li className="flex items-center gap-2 text-foreground">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Accès illimité aux questions
+                  </li>
+                  <li className="flex items-center gap-2 text-foreground">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Corrections détaillées
+                  </li>
+                  <li className="flex items-center gap-2 text-foreground">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Statistiques de progression
+                  </li>
+                  <li className="flex items-center gap-2 text-foreground">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Mises à jour régulières
+                  </li>
                 </ul>
               </CardContent>
             </Card>
+
+            {/* Creator Info */}
+            {pack.creator_name && (
+              <div className="text-sm text-muted-foreground">
+                Créé par <span className="font-medium text-foreground">{pack.creator_name}</span>
+              </div>
+            )}
           </div>
 
           {/* Sidebar - Purchase Card */}
@@ -144,12 +138,9 @@ export default function PackDetailPage() {
               <CardContent className="p-6">
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-foreground">{packDetails.price}€</span>
-                    {packDetails.originalPrice && (
-                      <span className="text-lg text-muted-foreground line-through">{packDetails.originalPrice}€</span>
-                    )}
+                    <span className="text-4xl font-bold text-foreground">{pack.price} DT</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Accès pour {packDetails.duration}</p>
+                  <p className="text-sm text-muted-foreground">Paiement unique pour un accès à vie</p>
                 </div>
 
                 <div className="space-y-3">
@@ -158,7 +149,7 @@ export default function PackDetailPage() {
                     Acheter maintenant
                   </Button>
                   <Button variant="outline" className="w-full bg-transparent" size="lg" asChild>
-                    <Link href={`/qcm/demo?pack=${packDetails.id}`}>Essayer gratuitement</Link>
+                    <Link href={`/qcm/demo?pack=${pack.id}`}>Essayer la démo</Link>
                   </Button>
                 </div>
 
@@ -169,11 +160,7 @@ export default function PackDetailPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Accès immédiat après paiement
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Satisfait ou remboursé sous 14 jours
+                    Accès immédiat
                   </div>
                 </div>
               </CardContent>

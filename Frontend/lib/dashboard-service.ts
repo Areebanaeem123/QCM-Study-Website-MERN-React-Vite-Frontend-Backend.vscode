@@ -52,11 +52,14 @@ export interface Ranking {
 }
 
 export interface StorePack {
-  id: string
-  title: string
-  description?: string
-  price: number
-  currency: string
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  currency: string;
+  mcqs?: any[];
+  sessions?: any[];
+  creator_name?: string;
 }
 
 export interface StoreQuestionBank {
@@ -134,11 +137,23 @@ export class DashboardService {
   }
 
   /**
+   * Get a single pack by ID (Added for real data integration)
+   */
+  static async getPackById(id: string): Promise<StorePack> {
+    try {
+      return await ApiClient.get<StorePack>(`/packs/${id}`);
+    } catch (error: any) {
+      console.error(`Failed to fetch pack ${id}:`, error);
+      throw new Error(error?.message || "Failed to fetch pack details");
+    }
+  }
+
+  /**
    * Get available question banks for purchase
    */
   static async getAvailableQuestionBanks(): Promise<StoreQuestionBank[]> {
     try {
-      return await ApiClient.get<StoreQuestionBank[]>("/question_bank_router/")
+      return await ApiClient.get<StoreQuestionBank[]>("/question_banks/")
     } catch (error: any) {
       console.error("Failed to fetch available question banks:", error)
       return []
@@ -154,6 +169,53 @@ export class DashboardService {
     } catch (error: any) {
       console.error("Failed to fetch available mock exams:", error)
       return []
+    }
+  }
+
+  /**
+   * Get questions for a specific session (pack, QB, or mock exam)
+   */
+  static async getSessionQuestions(params: {
+    pack_id?: string;
+    question_bank_id?: string;
+    mock_exam_id?: string;
+  }): Promise<any[]> {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.pack_id) searchParams.append("pack_id", params.pack_id);
+      if (params.question_bank_id) searchParams.append("question_bank_id", params.question_bank_id);
+      if (params.mock_exam_id) searchParams.append("mock_exam_id", params.mock_exam_id);
+      
+      return await ApiClient.get<any[]>(`/session/questions?${searchParams.toString()}`);
+    } catch (error: any) {
+      console.error("Failed to fetch session questions:", error);
+      throw new Error(error?.message || "Failed to fetch questions");
+    }
+  }
+
+  /**
+   * Submit quiz results after completion
+   */
+  static async submitQuizResult(data: {
+    pack_id?: string;
+    question_bank_id?: string;
+    mock_exam_id?: string;
+    score: number;
+    total_questions: number;
+    correct_answers: number;
+    mode: string;
+    time_taken: number;
+    responses: {
+      mcq_id: string;
+      selected_option_id: string | null;
+      is_correct: boolean;
+    }[];
+  }): Promise<any> {
+    try {
+      return await ApiClient.post("/results/submit", data);
+    } catch (error: any) {
+      console.error("Failed to submit quiz results:", error);
+      throw new Error(error?.message || "Failed to submit results");
     }
   }
 }

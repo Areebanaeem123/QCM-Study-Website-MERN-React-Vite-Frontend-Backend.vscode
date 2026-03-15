@@ -93,6 +93,23 @@ def list_packs(
 
 
 # ---------------------------------------------------------
+# GET SINGLE PACK
+# ---------------------------------------------------------
+@router.get("/{pack_id}", response_model=PackResponse)
+def get_pack(
+    pack_id: str,
+    db: Session = Depends(get_db)
+):
+    pack = db.query(Pack).filter_by(id=pack_id, is_published=True).first()
+    if not pack:
+        raise HTTPException(status_code=404, detail="Pack not found")
+    
+    # In a real app, we might want to attach more computed fields here 
+    # if the schema doesn't already handle them via relationships.
+    return pack
+
+
+# ---------------------------------------------------------
 # UPDATE PACK
 # ---------------------------------------------------------
 @router.put("/{pack_id}", response_model=PackResponse)

@@ -47,17 +47,17 @@ export class ApiClient {
       }
     }
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000)
+    // const controller = new AbortController()
+    // const timeoutId = setTimeout(() => controller.abort(), 60000)
 
     try {
       console.log(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body })
       const response = await fetch(url, {
         ...options,
         headers,
-        signal: controller.signal
+        // signal: controller.signal
       })
-      clearTimeout(timeoutId)
+      // clearTimeout(timeoutId)
 
       // Handle unauthorized - but NOT for public endpoints (they have real 401 errors to show)
       if (response.status === 401) {
@@ -247,8 +247,8 @@ export class ApiClient {
   }
 
   private static async refreshAccessToken(refreshToken: string): Promise<string | null> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000)
+    // const controller = new AbortController()
+    // const timeoutId = setTimeout(() => controller.abort(), 60000)
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: "POST",
@@ -256,9 +256,9 @@ export class ApiClient {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ refresh_token: refreshToken }),
-        signal: controller.signal
+        // signal: controller.signal
       })
-      clearTimeout(timeoutId)
+      // clearTimeout(timeoutId)
 
       if (!response.ok) {
         return null

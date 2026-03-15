@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import auth, universities , subjects , lesson ,question_type , mcqs , visualize_mcqs , user_router , packs , session, dashboard, admin, mcq_approvals
-from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router , visualize_packs , mcq_research , feedback , page_router , slider_router, upload
+from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router , visualize_packs , mcq_research , feedback , page_router , slider_router, upload, result
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authorization"])
+api_router.include_router(upload.router, prefix="/upload", tags=["File Upload"])
+api_router.include_router(result.router, prefix="/results", tags=["Results"])
 api_router.include_router(universities.router, prefix="/universities", tags=["Universities"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin Management"])
 api_router.include_router(subjects.router, prefix="/subjects",tags=["Subjects"])
@@ -23,4 +25,6 @@ api_router.include_router(mcq_research.router, prefix="/mcq_research", tags=["MC
 api_router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
 api_router.include_router(page_router.router ,prefix="/pages", tags=["Frontend Page Update from Backend"])
 api_router.include_router(slider_router.router , prefix="/slider", tags=["Frontend Slider Update from Backend"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(mcq_approvals.router, prefix="/approvals", tags=["MCQ Approvals"])
 api_router.include_router(upload.router, prefix="/upload", tags=["File Upload"])

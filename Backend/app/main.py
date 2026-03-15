@@ -11,6 +11,16 @@ app = FastAPI(
     description="QCM Study Backend API",
 )
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    import time
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    with open("request_log.txt", "a") as f:
+        f.write(f"{request.method} {request.url.path} - Status: {response.status_code} - Duration: {duration:.4f}s\n")
+    return response
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +38,7 @@ app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
+
 @app.get("/")
 async def root():
     return {"message": "QCM Study Backend API", "version": settings.VERSION}
