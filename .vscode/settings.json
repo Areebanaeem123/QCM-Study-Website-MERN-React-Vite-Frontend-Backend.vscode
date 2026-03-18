@@ -10,7 +10,8 @@
   "python.analysis.extraPaths": [
     "${workspaceFolder}/Backend"
   ],
-  "typescript.preferences.excludePackageJsonAutoImports": "off"
+  "typescript.preferences.excludePackageJsonAutoImports": "off",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }
 
 

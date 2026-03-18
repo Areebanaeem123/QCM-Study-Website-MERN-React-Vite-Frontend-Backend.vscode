@@ -7,6 +7,8 @@ interface AuthContextType {
   user: UserResponse | null
   isLoading: boolean
   error: string | null
+  login: (payload: any) => Promise<void>
+  register: (payload: any) => Promise<void>
   refreshUser: () => Promise<void>
   logout: () => void
 }
@@ -31,8 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null)
     } catch (err: any) {
       console.error("AuthContext fetchUser error:", err)
+      // Only clear if it's a real 401/403 or if the token is obviously invalid
+      if (err.status === 401 || err.status === 403) {
+        setUser(null)
+      }
       setError(err.message || "Failed to fetch user")
-      setUser(null)
     } finally {
       setIsLoading(false)
     }
@@ -41,6 +46,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchUser()
   }, [])
+
+  const login = async (payload: any) => {
+    setIsLoading(true)
+    try {
+      await AuthService.login(payload)
+      await fetchUser()
+    } catch (err: any) {
+      setIsLoading(false)
+      throw err
+    }
+  }
+
+  const register = async (payload: any) => {
+    setIsLoading(true)
+    try {
+      await AuthService.register(payload)
+      await fetchUser()
+    } catch (err: any) {
+      setIsLoading(false)
+      throw err
+    }
+  }
 
   const refreshUser = async () => {
     setIsLoading(true)
@@ -53,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, error, refreshUser, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, error, login, register, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   )

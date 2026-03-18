@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { LayoutDashboard, User, Package, Play, Trophy, ClipboardCheck, Book, Search, MessageSquare, BarChart2, Clock, FileText, ImageIcon, LogOut, Menu, X, Building2, BookOpen, GraduationCap, Layers, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+import { useLogout } from "@/lib/auth-hooks"
+
 const sidebarLinks = [
   { href: "/admin-dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/admin-dashboard/users", label: "Utilisateurs", icon: User },
@@ -32,6 +34,7 @@ const sidebarLinks = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const logout = useLogout()
 
   return (
     <>
@@ -86,16 +89,15 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        {/* Logout */}
         <div className="border-t border-sidebar-border p-4" suppressHydrationWarning>
-          <Link
-            href="/"
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+          <button
+            onClick={logout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
             suppressHydrationWarning
           >
             <LogOut className="h-5 w-5" />
             <span suppressHydrationWarning>Déconnexion</span>
-          </Link>
+          </button>
         </div>
       </aside>
     </>

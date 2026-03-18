@@ -23,6 +23,8 @@ from app.models.pack_review import PackReview
 from app.models.result import QuizAttempt, QuizResponse
 from app.models.page import Page 
 from app.models.slider import Slider
+from app.models.voucher import Voucher, VoucherRedemption
+from app.models.transaction import Transaction
 __all__ = ["User", 
 "University", 
 "subject",
@@ -48,6 +50,10 @@ __all__ = ["User",
 "QuizAttempt",
 "QuizResponse",
 "Page",
+"Slider",
+"Voucher",
+"VoucherRedemption",
+"Transaction"
 "Slider"
 ]
 

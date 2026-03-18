@@ -47,17 +47,17 @@ export class ApiClient {
       }
     }
 
-    // const controller = new AbortController()
-    // const timeoutId = setTimeout(() => controller.abort(), 60000)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
 
     try {
       console.log(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body })
       const response = await fetch(url, {
         ...options,
         headers,
-        // signal: controller.signal
+        signal: controller.signal
       })
-      // clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
 
       // Handle unauthorized - but NOT for public endpoints (they have real 401 errors to show)
       if (response.status === 401) {
@@ -142,6 +142,12 @@ export class ApiClient {
 
       return data as T
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw {
+          status: 0,
+          message: "La requête a expiré. Veuillez vérifier votre connexion.",
+        } as ApiError
+      }
       // If it's already an ApiError (thrown above), just rethrow it
       if (error && typeof error === 'object' && 'status' in error) {
         throw error
