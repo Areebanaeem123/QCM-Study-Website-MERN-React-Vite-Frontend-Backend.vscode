@@ -58,6 +58,7 @@ export interface StorePack {
   price: number;
   currency: string;
   type?: string;
+  image_url?: string;
   mcqs?: any[];
   sessions?: any[];
   creator_name?: string;
@@ -222,6 +223,15 @@ export class DashboardService {
     } catch (error: any) {
       console.error("Failed to submit quiz results:", error);
       throw new Error(error?.message || "Failed to submit results");
+    }
+  }
+
+  static async checkoutBasket(data: { items: any[], accept_terms: boolean, payment_method: string }): Promise<any> {
+    try {
+      return await ApiClient.post("/basket/checkout", data)
+    } catch (error: any) {
+      console.error("Failed to checkout basket:", error)
+      throw new Error(error?.message || "Failed to process purchase")
     }
   }
 }

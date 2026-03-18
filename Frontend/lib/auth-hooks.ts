@@ -79,9 +79,10 @@ export function useCurrentUser() {
  */
 export function useLogout() {
   const router = useRouter()
+  const { logout: contextLogout } = useAuth()
 
   const logout = () => {
-    AuthService.logout()
+    contextLogout()
     router.push("/connexion")
   }
 

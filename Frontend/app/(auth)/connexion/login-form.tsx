@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { AuthService } from "@/lib/auth-service"
 import { useToast } from "@/components/ui/use-toast"
@@ -13,6 +13,8 @@ import { useToast } from "@/components/ui/use-toast"
 export default function LoginForm() {
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callback") || searchParams.get("callbackUrl")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -67,8 +69,14 @@ export default function LoginForm() {
         // Set loading to false before navigation to improve perceived snappiness
         setIsLoading(false)
 
-        // Redirect based on user role
-        if (userRank === 6) {
+        // Redirect based on user role or callback
+        if (callbackUrl) {
+          toast({
+            title: "Connexion réussie",
+            description: "Retour à votre panier...",
+          })
+          router.push(callbackUrl)
+        } else if (userRank === 6) {
           toast({
             title: "Connexion réussie",
             description: "Chargement de l'administration...",
@@ -87,7 +95,7 @@ export default function LoginForm() {
         toast({
           title: "Connexion réussie",
         })
-        router.push("/tableau-de-bord")
+        router.push(callbackUrl || "/tableau-de-bord")
       }
     } catch (error: any) {
       console.error("Login error:", error)

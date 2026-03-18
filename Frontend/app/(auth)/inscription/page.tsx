@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,6 +41,8 @@ const diplomas = [
 
 export default function SignUpPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callback = searchParams.get("callback")
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -157,7 +159,8 @@ export default function SignUpPage() {
       await AuthService.register(payload)
       
       // Registration successful
-      router.push("/inscription/confirmation")
+      const confirmationUrl = callback ? `/inscription/confirmation?callback=${encodeURIComponent(callback)}` : "/inscription/confirmation"
+      router.push(confirmationUrl)
     } catch (error: any) {
       console.error("Registration error:", error)
       setErrors({

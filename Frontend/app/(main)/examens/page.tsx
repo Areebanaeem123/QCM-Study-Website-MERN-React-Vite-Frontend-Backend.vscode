@@ -6,15 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { Clock, FileText, Search, Users, AlertCircle } from "lucide-react"
+import { Clock, FileText, Search, Users, AlertCircle, ShoppingBasket } from "lucide-react"
 import { DashboardService, StoreMockExam } from "@/lib/dashboard-service"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useBasket } from "@/lib/basket-context"
+import { useRouter } from "next/navigation"
 
 export default function ExamsPage() {
   const [exams, setExams] = useState<StoreMockExam[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const { addItem, isInBasket } = useBasket()
+  const router = useRouter()
 
   useEffect(() => {
     async function fetchExams() {
@@ -32,6 +36,18 @@ export default function ExamsPage() {
     }
     fetchExams()
   }, [])
+
+  const handleAddToBasket = (exam: StoreMockExam) => {
+    addItem({
+      id: exam.id,
+      title: exam.title,
+      price: exam.price || 0,
+      currency: exam.currency || "DT",
+      type: "mock_exam",
+      image_url: exam.image_url,
+    })
+    router.push("/panier")
+  }
 
   const filteredExams = exams.filter((exam) =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -140,13 +156,18 @@ export default function ExamsPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex items-center justify-between border-t border-border pt-4">
-                  <span className="text-2xl font-bold text-foreground">
-                    {exam.price} {exam.currency === "CHF" ? "CHF" : "€"}
+                <CardFooter className="flex items-center justify-between border-t border-border pt-4 gap-2">
+                  <span className="text-xl font-bold text-foreground">
+                    {exam.price} {exam.currency === "CHF" ? "CHF" : "DT"}
                   </span>
-                  <Button asChild>
-                    <Link href={`/packs/${exam.id}`}>Voir détails</Link>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleAddToBasket(exam)} disabled={isInBasket(exam.id)}>
+                      <ShoppingBasket className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" asChild>
+                      <Link href={`/packs/${exam.id}`}>Détails</Link>
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))

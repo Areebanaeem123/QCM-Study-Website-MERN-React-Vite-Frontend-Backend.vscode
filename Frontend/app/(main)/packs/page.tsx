@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import { CheckCircle, Search, Filter, Loader2 } from "lucide-react"
+import { CheckCircle, Search, Filter, Loader2, ShoppingBasket } from "lucide-react"
 import { useState, useEffect } from "react"
 import { DashboardService, StorePack } from "@/lib/dashboard-service"
+import { useBasket } from "@/lib/basket-context"
+import { useRouter } from "next/navigation"
 
 const categories = ["Tous", "Médecine", "Pharmacie", "PACES", "Internat"]
 const levels = ["Tous", "Débutant", "Intermédiaire", "Avancé", "Expert"]
@@ -18,6 +20,8 @@ export default function PacksPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Tous")
+  const { addItem, isInBasket } = useBasket()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchPacks = async () => {
@@ -32,6 +36,18 @@ export default function PacksPage() {
     }
     fetchPacks()
   }, [])
+
+  const handleAddToBasket = (pack: StorePack) => {
+    addItem({
+      id: pack.id,
+      title: pack.title,
+      price: pack.price,
+      currency: pack.currency || "DT",
+      type: "pack",
+      image_url: pack.image_url,
+    })
+    router.push("/panier")
+  }
 
   const filteredPacks = packs.filter(pack => {
     const matchesSearch = pack.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -120,9 +136,14 @@ export default function PacksPage() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-foreground">{pack.price} DT</span>
                 </div>
-                <Button asChild>
-                  <Link href={`/packs/${pack.id}`}>Voir le pack</Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleAddToBasket(pack)} disabled={isInBasket(pack.id)}>
+                    <ShoppingBasket className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href={`/packs/${pack.id}`}>Voir le pack</Link>
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           )) : (

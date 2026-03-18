@@ -1,9 +1,16 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, CheckCircle } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 export default function ConfirmationPage() {
+  const searchParams = useSearchParams()
+  const callback = searchParams.get("callback")
+  const loginUrl = callback ? `/connexion?callback=${encodeURIComponent(callback)}` : "/connexion"
+
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
       <Card className="w-full max-w-md text-center">
@@ -29,7 +36,9 @@ export default function ConfirmationPage() {
         </CardContent>
         <CardFooter className="flex-col gap-2">
           <Button asChild className="w-full">
-            <Link href="/connexion">Aller à la connexion</Link>
+            <Link href={loginUrl}>
+              {callback ? "Se connecter et continuer" : "Aller à la connexion"}
+            </Link>
           </Button>
           <Button variant="outline" asChild className="w-full bg-transparent">
             <Link href="/">Retour à l'accueil</Link>

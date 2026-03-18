@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import auth, universities , subjects , lesson ,question_type , mcqs , visualize_mcqs , user_router , packs , session, dashboard, admin, mcq_approvals
-from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router , visualize_packs , mcq_research , feedback , page_router , slider_router, upload, result
+from app.api.v1.endpoints import mcq_filter_router, pack_mcq_router , mock_exams_admin, question_bank_router , visualize_packs , mcq_research , feedback , page_router , slider_router, upload, result, basket
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authorization"])
+api_router.include_router(basket.router, prefix="/basket", tags=["Basket"])
 api_router.include_router(upload.router, prefix="/upload", tags=["File Upload"])
 api_router.include_router(result.router, prefix="/results", tags=["Results"])
 api_router.include_router(universities.router, prefix="/universities", tags=["Universities"])

@@ -4,16 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { CheckCircle, BookOpen, Clock, Users, Award, ArrowLeft, ShoppingCart, Loader2 } from "lucide-react"
-import { useParams } from "next/navigation"
+import { CheckCircle, BookOpen, Clock, Users, Award, ArrowLeft, ShoppingCart, Loader2, ShoppingBasket } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { DashboardService, StorePack } from "@/lib/dashboard-service"
+import { useBasket } from "@/lib/basket-context"
 
 export default function PackDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const packId = params.id as string
   const [pack, setPack] = useState<StorePack | null>(null)
   const [loading, setLoading] = useState(true)
+  const { addItem, isInBasket } = useBasket()
 
   useEffect(() => {
     const fetchPack = async () => {
@@ -28,6 +31,20 @@ export default function PackDetailPage() {
     }
     if (packId) fetchPack()
   }, [packId])
+
+  const handleAddToBasket = () => {
+    if (pack) {
+      addItem({
+        id: pack.id,
+        title: pack.title,
+        price: pack.price,
+        currency: pack.currency,
+        type: "pack",
+        image_url: pack.image_url,
+      })
+      router.push("/panier")
+    }
+  }
 
   if (loading) {
     return (
@@ -144,9 +161,9 @@ export default function PackDetailPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button className="w-full" size="lg">
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Acheter maintenant
+                  <Button className="w-full" size="lg" onClick={handleAddToBasket} disabled={isInBasket(pack.id)}>
+                    <ShoppingBasket className="mr-2 h-4 w-4" />
+                    {isInBasket(pack.id) ? "Déjà au panier" : "Ajouter au panier"}
                   </Button>
                   <Button variant="outline" className="w-full bg-transparent" size="lg" asChild>
                     <Link href={`/qcm/demo?pack=${pack.id}`}>Essayer la démo</Link>
