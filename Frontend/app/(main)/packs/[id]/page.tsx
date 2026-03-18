@@ -40,9 +40,9 @@ export default function PackDetailPage() {
   if (!pack) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold">Pack non trouvé</h1>
+        <h1 className="text-2xl font-bold">Contenu non trouvé</h1>
         <Button asChild className="mt-4">
-          <Link href="/packs">Retour aux packs</Link>
+          <Link href="/packs">Retour à l'accueil</Link>
         </Button>
       </div>
     )
@@ -53,11 +53,11 @@ export default function PackDetailPage() {
       <div className="container mx-auto px-4">
         {/* Back button */}
         <Link
-          href="/packs"
+          href={pack.type === "mock_exam" ? "/examens" : "/packs"}
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour aux packs
+          {pack.type === "mock_exam" ? "Retour aux examens" : "Retour aux packs"}
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-3">
@@ -65,7 +65,7 @@ export default function PackDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Badge>Général</Badge>
+                <Badge>{pack.type === "mock_exam" ? "Examen" : "Pack"}</Badge>
                 <Badge variant="outline">Accès illimité</Badge>
               </div>
               <h1 className="text-3xl font-bold text-foreground md:text-4xl">{pack.title}</h1>

@@ -57,6 +57,7 @@ export interface StorePack {
   description?: string;
   price: number;
   currency: string;
+  type?: string;
   mcqs?: any[];
   sessions?: any[];
   creator_name?: string;
@@ -76,6 +77,11 @@ export interface StoreMockExam {
   description?: string
   price?: number
   currency?: string
+  image_url?: string
+  total_questions?: number
+  total_purchases?: number
+  average_rating?: number
+  university_id?: string
 }
 
 export class DashboardService {

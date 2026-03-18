@@ -12,14 +12,27 @@ import { useSearchParams } from "next/navigation"
 import { Play, Clock, BookOpen, Settings } from "lucide-react"
 import { DashboardService, PurchasedPack } from "@/lib/dashboard-service"
 import { useProtectedRoute } from "@/lib/auth-hooks"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useRouter } from "next/navigation"
 
 export default function StartQCMPage() {
   useProtectedRoute()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const packIdFromUrl = searchParams.get("pack")
 
   const [availablePacks, setAvailablePacks] = useState<PurchasedPack[]>([])
   const [loading, setLoading] = useState(true)
+  const [showNoPacksDialog, setShowNoPacksDialog] = useState(false)
 
   const [selectedPack, setSelectedPack] = useState(packIdFromUrl || "")
 
@@ -60,8 +73,15 @@ export default function StartQCMPage() {
   const currentPack = availablePacks.find((p) => p.id.toString() === selectedPack)
   const displaySubjects = currentPack?.subjects || []
 
-  // Can start if a pack is selected. If they haven't purchased any, availablePacks will be empty.
-  const canStart = selectedPack && availablePacks.length > 0
+  // Can start if a pack is selected. If they haven't purchased any, allow clicking to show the popup.
+  const canStart = availablePacks.length === 0 || (selectedPack !== "" && availablePacks.length > 0)
+
+  const handleStartClick = (e: React.MouseEvent) => {
+    if (availablePacks.length === 0) {
+      e.preventDefault()
+      setShowNoPacksDialog(true)
+    }
+  }
 
   return (
     <div className="space-y-6" suppressHydrationWarning>
@@ -248,14 +268,44 @@ export default function StartQCMPage() {
                 </div>
               )}
 
-              <Button className="w-full" size="lg" disabled={!canStart} asChild>
-                <Link
-                  href={`/qcm/session?pack=${selectedPack}&questions=${questionCount}&mode=${mode}&timer=${timerEnabled}`}
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  Commencer le QCM
-                </Link>
+              <Button 
+                className="w-full" 
+                size="lg" 
+                disabled={!canStart} 
+                asChild={availablePacks.length > 0}
+                onClick={handleStartClick}
+              >
+                {availablePacks.length > 0 ? (
+                  <Link
+                    href={`/qcm/session?pack=${selectedPack}&questions=${questionCount}&mode=${mode}&timer=${timerEnabled}`}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Commencer le QCM
+                  </Link>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Commencer le QCM
+                  </>
+                )}
               </Button>
+
+              <AlertDialog open={showNoPacksDialog} onOpenChange={setShowNoPacksDialog}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Aucun pack acheté</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Vous n'avez acheté aucun pack pour continuer avec les QCM. Veuillez d'abord acheter un pack pour accéder aux sessions d'entraînement.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setShowNoPacksDialog(false)}>Fermer</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push("/packs")}>
+                      Voir les packs
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
