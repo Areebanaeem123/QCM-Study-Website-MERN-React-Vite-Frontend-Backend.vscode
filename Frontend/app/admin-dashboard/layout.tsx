@@ -2,8 +2,19 @@
 
 import type React from "react"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
+import { useRequireAdmin } from "@/lib/auth-hooks"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { isLoading } = useRequireAdmin()
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen bg-muted/30" suppressHydrationWarning>
       <AdminSidebar />

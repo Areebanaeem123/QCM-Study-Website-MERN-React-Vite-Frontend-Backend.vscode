@@ -57,25 +57,20 @@ export default function LoginForm() {
 
       // The login() call successfully finished and fetchUser was called internally
       // Now we can rely on redirected logic
-      // Note: We need to check the just-updated user state. 
-      // Since state updates are async, we might need a small trick or just use the router push 
-      // and let the guards handle it, but here we want to be specific about where to go.
+      
+      const user = await AuthService.getCurrentUser()
       
       toast({
         title: "Connexion réussie",
         description: "Chargement de votre espace...",
       })
 
-      // Redirect will be handled by the fact that the next page will see the authenticated state
-      // But we still want to trigger the push here for better UX
-      // We can use the callbackUrl if present, or check the rank from a potential fresh fetch
-      // But a more robust way is to just push to the dashboard and let the layout/guards handle it
-      
-      if (callbackUrl) {
+      // Role-based redirection
+      if (user.rank === 6) {
+        router.push("/admin-dashboard")
+      } else if (callbackUrl) {
         router.push(callbackUrl)
       } else {
-        // We'll push to a generic dashboard and let the middleware/guards handle role-specific routing if needed
-        // For now, we'll try to guess based on what we know or just go to student dashboard
         router.push("/tableau-de-bord")
       }
       
