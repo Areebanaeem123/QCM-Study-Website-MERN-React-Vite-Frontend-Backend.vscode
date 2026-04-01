@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Play, Clock, BookOpen, Settings } from "lucide-react"
+import { Play, Clock, BookOpen, Settings, Info, Award } from "lucide-react"
 import { DashboardService, PurchasedPack } from "@/lib/dashboard-service"
 import { useProtectedRoute } from "@/lib/auth-hooks"
 import {
@@ -28,20 +28,19 @@ export default function StartQCMPage() {
   useProtectedRoute()
   const searchParams = useSearchParams()
   const router = useRouter()
+  
+  // Support all three identifier types from URL
   const packIdFromUrl = searchParams.get("pack")
+  const qbIdFromUrl = searchParams.get("question_bank")
+  const mockIdFromUrl = searchParams.get("mock_exam")
+  
+  const initialId = packIdFromUrl || qbIdFromUrl || mockIdFromUrl || ""
 
   const [availablePacks, setAvailablePacks] = useState<PurchasedPack[]>([])
   const [loading, setLoading] = useState(true)
   const [showNoPacksDialog, setShowNoPacksDialog] = useState(false)
 
-  const [selectedPack, setSelectedPack] = useState(packIdFromUrl || "")
-
-  // Auto-select pack if provided in URL
-  useEffect(() => {
-    if (packIdFromUrl) {
-      setSelectedPack(packIdFromUrl)
-    }
-  }, [packIdFromUrl])
+  const [selectedPack, setSelectedPack] = useState(initialId)
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [questionCount, setQuestionCount] = useState("20")
@@ -62,7 +61,26 @@ export default function StartQCMPage() {
     fetchPacks()
   }, [])
 
-  // No hardcoded categories here anymore - using pack subjects
+  const currentPack = availablePacks.find((p) => p.id.toString() === selectedPack)
+  const isMockExam = currentPack?.type === 'mock_exam';
+  const displaySubjects = currentPack?.subjects || []
+
+  // Auto-select and enforce settings
+  useEffect(() => {
+    if (initialId) {
+      setSelectedPack(initialId)
+    }
+  }, [initialId])
+
+  // Enforce Mock Exam settings
+  useEffect(() => {
+    if (isMockExam && currentPack) {
+      setMode("exam");
+      setTimerEnabled(true);
+      setQuestionCount(currentPack.total_qcm.toString());
+      setSelectedCategories([]); // Reset categories to "all" for mock exams
+    }
+  }, [isMockExam, currentPack])
 
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) =>
@@ -70,10 +88,17 @@ export default function StartQCMPage() {
     )
   }
 
-  const currentPack = availablePacks.find((p) => p.id.toString() === selectedPack)
-  const displaySubjects = currentPack?.subjects || []
+  // Function to build the correct query string for the session page
+  const getSessionUrl = () => {
+    if (!currentPack) return "#";
+    
+    let paramName = "pack";
+    if (currentPack.type === 'question_bank') paramName = "question_bank";
+    else if (currentPack.type === 'mock_exam') paramName = "mock_exam";
+    
+    return `/qcm/session?${paramName}=${selectedPack}&questions=${questionCount}&mode=${mode}&timer=${timerEnabled}&name=${encodeURIComponent(currentPack.name)}`;
+  }
 
-  // Can start if a pack is selected. If they haven't purchased any, allow clicking to show the popup.
   const canStart = availablePacks.length === 0 || (selectedPack !== "" && availablePacks.length > 0)
 
   const handleStartClick = (e: React.MouseEvent) => {
@@ -87,29 +112,30 @@ export default function StartQCMPage() {
     <div className="space-y-6" suppressHydrationWarning>
       <div>
         <h1 className="text-2xl font-bold text-foreground md:text-3xl" suppressHydrationWarning>Commencer un QCM</h1>
-        <p className="text-muted-foreground" suppressHydrationWarning>Configurez votre session de QCM</p>
+        <p className="text-muted-foreground" suppressHydrationWarning>Configurez votre session de QCM personnalisé</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Configuration */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Pack Selection */}
+          {/* Item Selection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <BookOpen className="h-5 w-5 text-primary" suppressHydrationWarning />
-                Sélection du Pack
+                Sélection du Contenu
               </CardTitle>
-              <CardDescription>Choisissez le pack sur lequel vous souhaitez vous entraîner</CardDescription>
+              <CardDescription>Choisissez le pack, la banque de questions ou l'examen sur lequel vous souhaitez vous entraîner</CardDescription>
             </CardHeader>
             <CardContent>
               <Select value={selectedPack} onValueChange={setSelectedPack}>
                 <SelectTrigger className="w-full" suppressHydrationWarning>
-                  <SelectValue placeholder="Sélectionner un pack" />
+                  <SelectValue placeholder="Sélectionner un contenu" />
                 </SelectTrigger>
                 <SelectContent>
                   {availablePacks.map((pack) => (
                     <SelectItem key={pack.id} value={pack.id.toString()}>
+                      {pack.type === 'question_bank' ? '📚 ' : pack.type === 'mock_exam' ? '🎓 ' : '📦 '}
                       {pack.name} ({pack.total_qcm} QCM)
                     </SelectItem>
                   ))}
@@ -118,108 +144,139 @@ export default function StartQCMPage() {
             </CardContent>
           </Card>
 
-          {/* Category Selection */}
-          {selectedPack && displaySubjects.length > 0 && (
-            <Card>
+          {isMockExam ? (
+            /* Mock Exam Info Card - Replaces settings and categories */
+            <Card className="border-primary bg-primary/5">
               <CardHeader>
-                <CardTitle className="text-foreground" suppressHydrationWarning>Catégories</CardTitle>
-                <CardDescription>Sélectionnez les catégories à inclure (optionnel)</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Award className="h-5 w-5" />
+                  Configuration d'Examen Blanc
+                </CardTitle>
+                <CardDescription className="text-primary/70">
+                  Cet examen est configuré pour simuler les conditions réelles du concours.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {displaySubjects.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
-                        selectedCategories.includes(cat.id) ? "border-primary bg-primary/5" : "border-border"
-                      }`}
-                      onClick={() => toggleCategory(cat.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={selectedCategories.includes(cat.id)}
-                          onCheckedChange={() => toggleCategory(cat.id)}
-                        />
-                        <span className="text-foreground">{cat.name}</span>
-                      </div>
-                    </div>
-                  ))}
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-3 rounded-lg bg-background p-4 border border-primary/20">
+                  <Info className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="text-sm space-y-2">
+                    <p className="font-medium">Règles de l'examen :</p>
+                    <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                      <li>Toutes les questions ({currentPack.total_qcm}) sont incluses.</li>
+                      <li>Le chronomètre est activé (1 min / question).</li>
+                      <li>Mode Examen : Corrections disponibles à la fin uniquement.</li>
+                      <li>Une fois commencé, le temps continue de s'écouler.</li>
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+          ) : (
+            <>
+              {/* Category Selection - Only for non-mock exams */}
+              {selectedPack && displaySubjects.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-foreground" suppressHydrationWarning>Catégories</CardTitle>
+                    <CardDescription>Sélectionnez les catégories à inclure (optionnel)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {displaySubjects.map((cat) => (
+                        <div
+                          key={cat.id}
+                          className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
+                            selectedCategories.includes(cat.id) ? "border-primary bg-primary/5" : "border-border"
+                          }`}
+                          onClick={() => toggleCategory(cat.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={selectedCategories.includes(cat.id)}
+                              onCheckedChange={() => toggleCategory(cat.id)}
+                            />
+                            <span className="text-foreground">{cat.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Settings - Only for non-mock exams */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground" suppressHydrationWarning>
+                    <Settings className="h-5 w-5 text-primary" suppressHydrationWarning/>
+                    Paramètres
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6" suppressHydrationWarning>
+                  {/* Mode */}
+                  <div className="space-y-3">
+                    <Label>Mode</Label>
+                    <RadioGroup value={mode} onValueChange={setMode} className="grid gap-3 sm:grid-cols-2">
+                      <div
+                        className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer ${mode === "practice" ? "border-primary bg-primary/5" : "border-border"}`}
+                      >
+                        <RadioGroupItem value="practice" id="practice" />
+                        <div>
+                          <Label htmlFor="practice" className="cursor-pointer font-medium text-foreground" suppressHydrationWarning>
+                            Mode Entraînement
+                          </Label>
+                          <p className="text-sm text-muted-foreground" suppressHydrationWarning>Voir les corrections après chaque question</p>
+                        </div>
+                      </div>
+                      <div
+                        className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer ${mode === "exam" ? "border-primary bg-primary/5" : "border-border"}`}
+                      >
+                        <RadioGroupItem value="exam" id="exam" />
+                        <div>
+                          <Label htmlFor="exam" className="cursor-pointer font-medium text-foreground">
+                            Mode Examen
+                          </Label>
+                          <p className="text-sm text-muted-foreground" suppressHydrationWarning>Corrections à la fin uniquement</p>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Question Count */}
+                  <div className="space-y-2">
+                    <Label>Nombre de questions</Label>
+                    <Select value={questionCount} onValueChange={setQuestionCount}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 questions</SelectItem>
+                        <SelectItem value="20">20 questions</SelectItem>
+                        <SelectItem value="30">30 questions</SelectItem>
+                        <SelectItem value="50">50 questions</SelectItem>
+                        <SelectItem value="100">100 questions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Timer */}
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="timer"
+                      checked={timerEnabled}
+                      onCheckedChange={(checked) => setTimerEnabled(checked as boolean)}
+                    />
+                    <div>
+                      <Label htmlFor="timer" className="cursor-pointer text-foreground">
+                        Activer le chronomètre
+                      </Label>
+                      <p className="text-sm text-muted-foreground">1 minute par question</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
-
-          {/* Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground" suppressHydrationWarning>
-                <Settings className="h-5 w-5 text-primary" suppressHydrationWarning/>
-                Paramètres
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6" suppressHydrationWarning>
-              {/* Mode */}
-              <div className="space-y-3">
-                <Label>Mode</Label>
-                <RadioGroup value={mode} onValueChange={setMode} className="grid gap-3 sm:grid-cols-2">
-                  <div
-                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer ${mode === "practice" ? "border-primary bg-primary/5" : "border-border"}`}
-                  >
-                    <RadioGroupItem value="practice" id="practice" />
-                    <div>
-                      <Label htmlFor="practice" className="cursor-pointer font-medium text-foreground" suppressHydrationWarning>
-                        Mode Entraînement
-                      </Label>
-                      <p className="text-sm text-muted-foreground" suppressHydrationWarning>Voir les corrections après chaque question</p>
-                    </div>
-                  </div>
-                  <div
-                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer ${mode === "exam" ? "border-primary bg-primary/5" : "border-border"}`}
-                  >
-                    <RadioGroupItem value="exam" id="exam" />
-                    <div>
-                      <Label htmlFor="exam" className="cursor-pointer font-medium text-foreground">
-                        Mode Examen
-                      </Label>
-                      <p className="text-sm text-muted-foreground" suppressHydrationWarning>Corrections à la fin uniquement</p>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Question Count */}
-              <div className="space-y-2">
-                <Label>Nombre de questions</Label>
-                <Select value={questionCount} onValueChange={setQuestionCount}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 questions</SelectItem>
-                    <SelectItem value="20">20 questions</SelectItem>
-                    <SelectItem value="30">30 questions</SelectItem>
-                    <SelectItem value="50">50 questions</SelectItem>
-                    <SelectItem value="100">100 questions</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Timer */}
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="timer"
-                  checked={timerEnabled}
-                  onCheckedChange={(checked) => setTimerEnabled(checked as boolean)}
-                />
-                <div>
-                  <Label htmlFor="timer" className="cursor-pointer text-foreground">
-                    Activer le chronomètre
-                  </Label>
-                  <p className="text-sm text-muted-foreground">1 minute par question</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Summary */}
@@ -231,15 +288,21 @@ export default function StartQCMPage() {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Pack</span>
+                  <span className="text-muted-foreground">Contenu</span>
                   <span className="font-medium text-foreground">
                     {selectedPack ? availablePacks.find((p) => p.id.toString() === selectedPack)?.name : "-"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Type</span>
+                  <span className="font-medium text-foreground capitalize">
+                    {currentPack?.type.replace('_', ' ') || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Catégories</span>
                   <span className="font-medium text-foreground">
-                    {selectedCategories.length > 0 ? selectedCategories.length : "Toutes"}
+                    {isMockExam ? "Toutes" : (selectedCategories.length > 0 ? selectedCategories.length : "Toutes")}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -277,15 +340,15 @@ export default function StartQCMPage() {
               >
                 {availablePacks.length > 0 ? (
                   <Link
-                    href={`/qcm/session?pack=${selectedPack}&questions=${questionCount}&mode=${mode}&timer=${timerEnabled}`}
+                    href={getSessionUrl()}
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    Commencer le QCM
+                    {isMockExam ? "Lancer l'Examen" : "Commencer le QCM"}
                   </Link>
                 ) : (
                   <>
                     <Play className="mr-2 h-4 w-4" />
-                    Commencer le QCM
+                    Commencer
                   </>
                 )}
               </Button>
@@ -293,15 +356,15 @@ export default function StartQCMPage() {
               <AlertDialog open={showNoPacksDialog} onOpenChange={setShowNoPacksDialog}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Aucun pack acheté</AlertDialogTitle>
+                    <AlertDialogTitle>Aucun contenu acheté</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Vous n'avez acheté aucun pack pour continuer avec les QCM. Veuillez d'abord acheter un pack pour accéder aux sessions d'entraînement.
+                      Vous n'avez acheté aucun pack ou banque de questions pour continuer. Veuillez d'abord effectuer un achat pour accéder aux sessions d'entraînement.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setShowNoPacksDialog(false)}>Fermer</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => router.push("/packs")}>
-                      Voir les packs
+                    <AlertDialogAction onClick={() => router.push("/tableau-de-bord/mes-packs")}>
+                      Voir la boutique
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

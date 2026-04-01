@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +37,7 @@ export default function QCMSessionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [answers, setAnswers] = useState<Record<string, any>>({})
   const [flaggedQuestions, setFlaggedQuestions] = useState<string[]>([])
   const [showCorrection, setShowCorrection] = useState(false)
   const [showExitDialog, setShowExitDialog] = useState(false)
@@ -102,7 +103,18 @@ export default function QCMSessionPage() {
 
   const handleAnswer = (value: string) => {
     if (!currentQuestion) return
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
+    
+    const isEvaluate = currentQuestion.question_type?.answer_mode === "true_false_per_option"
+    
+    if (isEvaluate) {
+      const currentAnswers = (answers[currentQuestion.id] as string[]) || []
+      const newAnswers = currentAnswers.includes(value)
+        ? currentAnswers.filter(id => id !== value)
+        : [...currentAnswers, value]
+      setAnswers((prev) => ({ ...prev, [currentQuestion.id]: newAnswers }))
+    } else {
+      setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }))
+    }
   }
 
   const toggleFlag = () => {
@@ -144,15 +156,39 @@ export default function QCMSessionPage() {
     const processedResponses: any[] = []
 
     questions.forEach((q) => {
-      const correctOption = q.options.find((o: any) => o.is_correct)
-      const isCorrect = answers[q.id] === correctOption?.id
-      if (isCorrect) correct++
+      const isEvaluate = q.question_type?.answer_mode === "true_false_per_option"
       
-      processedResponses.push({
-        mcq_id: q.id,
-        selected_option_id: answers[q.id] || null,
-        is_correct: isCorrect
-      })
+      if (isEvaluate) {
+        const selectedIds = (answers[q.id] as string[]) || []
+        const correctIds = q.options.filter((o: any) => o.is_correct).map((o: any) => o.id)
+        const incorrectIds = q.options.filter((o: any) => !o.is_correct).map((o: any) => o.id)
+        
+        // Scoring: (Correct True picks + Correct False picks) / Total Options
+        let questionPoints = 0
+        q.options.forEach((o: any) => {
+          const isSelected = selectedIds.includes(o.id)
+          if ((o.is_correct && isSelected) || (!o.is_correct && !isSelected)) {
+            questionPoints += (1 / q.options.length)
+          }
+        })
+        
+        correct += questionPoints
+        processedResponses.push({
+          mcq_id: q.id,
+          selected_option_ids: selectedIds,
+          is_correct: questionPoints === 1.0
+        })
+      } else {
+        const correctOption = q.options.find((o: any) => o.is_correct)
+        const isCorrect = answers[q.id] === correctOption?.id
+        if (isCorrect) correct += 1
+        
+        processedResponses.push({
+          mcq_id: q.id,
+          selected_option_id: answers[q.id] || null,
+          is_correct: isCorrect
+        })
+      }
     })
 
     const score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
@@ -241,6 +277,9 @@ export default function QCMSessionPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground mr-4 hidden lg:inline">
+              Session d'étude : {searchParams.get("name") || "Entraînement"}
+            </span>
             <span className="text-sm text-muted-foreground">
               Question {currentQuestionIndex + 1}/{questions.length}
             </span>
@@ -318,38 +357,84 @@ export default function QCMSessionPage() {
                 <h2 className="mb-6 text-xl font-semibold text-foreground">{currentQuestion.question_text}</h2>
 
                 {/* Options */}
-                <RadioGroup value={selectedAnswer || ""} onValueChange={handleAnswer} className="space-y-3">
-                  {currentQuestion.options.map((option: any) => {
-                    let optionClass = "border-border"
-                    if (showCorrection) {
-                      if (option.is_correct) {
-                        optionClass = "border-green-500 bg-green-50"
-                      } else if (option.id === selectedAnswer && !option.is_correct) {
-                        optionClass = "border-red-500 bg-red-50"
+                {currentQuestion.question_type?.answer_mode === "true_false_per_option" ? (
+                  <div className="space-y-3">
+                    {currentQuestion.options.map((option: any) => {
+                      const isSelected = (answers[currentQuestion.id] as string[] || []).includes(option.id)
+                      let optionClass = "border-border"
+                      if (showCorrection) {
+                        if (option.is_correct) {
+                          optionClass = "border-green-500 bg-green-50"
+                        } else if (isSelected && !option.is_correct) {
+                          optionClass = "border-red-500 bg-red-50"
+                        }
+                      } else if (isSelected) {
+                        optionClass = "border-primary bg-primary/5"
                       }
-                    } else if (selectedAnswer === option.id) {
-                      optionClass = "border-primary bg-primary/5"
-                    }
 
-                    return (
-                      <div
-                        key={option.id}
-                        className={`flex items-center space-x-3 rounded-lg border p-4 transition-colors ${optionClass}`}
-                      >
-                        <RadioGroupItem value={option.id} id={option.id} disabled={showCorrection} />
-                        <Label htmlFor={option.id} className="flex-1 cursor-pointer text-foreground">
-                          {option.option_text}
-                        </Label>
-                        {showCorrection && option.is_correct && (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        )}
-                        {showCorrection &&
-                          option.id === selectedAnswer &&
-                          !option.is_correct && <XCircle className="h-5 w-5 text-red-500" />}
-                      </div>
-                    )
-                  })}
-                </RadioGroup>
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-center space-x-3 rounded-lg border p-4 transition-colors ${optionClass}`}
+                        >
+                          <Checkbox 
+                            id={option.id} 
+                            checked={isSelected}
+                            onCheckedChange={() => handleAnswer(option.id)}
+                            disabled={showCorrection}
+                          />
+                          <Label htmlFor={option.id} className="flex-1 cursor-pointer text-foreground">
+                            {option.option_text}
+                          </Label>
+                          {showCorrection && (
+                            <div className="flex items-center gap-2">
+                              {option.is_correct ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-700">Vrai</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground border-dashed">Faux</Badge>
+                              )}
+                              {option.is_correct && <CheckCircle className="h-5 w-5 text-green-500" />}
+                              {isSelected && !option.is_correct && <XCircle className="h-5 w-5 text-red-500" />}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <RadioGroup value={selectedAnswer || ""} onValueChange={handleAnswer} className="space-y-3">
+                    {currentQuestion.options.map((option: any) => {
+                      let optionClass = "border-border"
+                      if (showCorrection) {
+                        if (option.is_correct) {
+                          optionClass = "border-green-500 bg-green-50"
+                        } else if (option.id === selectedAnswer && !option.is_correct) {
+                          optionClass = "border-red-500 bg-red-50"
+                        }
+                      } else if (selectedAnswer === option.id) {
+                        optionClass = "border-primary bg-primary/5"
+                      }
+
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-center space-x-3 rounded-lg border p-4 transition-colors ${optionClass}`}
+                        >
+                          <RadioGroupItem value={option.id} id={option.id} disabled={showCorrection} />
+                          <Label htmlFor={option.id} className="flex-1 cursor-pointer text-foreground">
+                            {option.option_text}
+                          </Label>
+                          {showCorrection && option.is_correct && (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          )}
+                          {showCorrection &&
+                            option.id === selectedAnswer &&
+                            !option.is_correct && <XCircle className="h-5 w-5 text-red-500" />}
+                        </div>
+                      )
+                    })}
+                  </RadioGroup>
+                )}
 
                 {/* Correction */}
                 {showCorrection && (

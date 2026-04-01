@@ -90,40 +90,70 @@ async def get_dashboard_stats(
 async def get_student_rankings(
     pack_id: str = None,
     mock_exam_id: str = None,
+    subject_id: str = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Get student rankings.
-    For now, returns a prioritized list of students by purchase count or mock data
-    until real results/scores are fully implemented in the backend.
+    - If subject_id is provided, ranks by average correct rate of responses in that subject.
+    - Otherwise, ranks by average score of QuizAttempts filtered by pack/mock_exam.
+    - Anonymous for peers (only current user's name is visible).
     """
-    # Priority: Pack students > All students
-    if pack_id:
-        rankings = db.query(
-            User.first_name, User.last_name, User.email,
-            func.count(PackPurchase.id).label('score')
-        ).join(PackPurchase, User.id == PackPurchase.student_id)\
-         .filter(PackPurchase.pack_id == pack_id)\
-         .group_by(User.id)\
-         .order_by(func.count(PackPurchase.id).desc()).limit(20).all()
-    else:
-        rankings = db.query(
-            User.first_name, User.last_name, User.email,
-            func.count(PackPurchase.id).label('score')
-        ).join(PackPurchase, User.id == PackPurchase.student_id)\
-         .group_by(User.id)\
-         .order_by(func.count(PackPurchase.id).desc()).limit(20).all()
+    from app.models.result import QuizAttempt, QuizResponse
+    from app.models.mcq import MCQ
 
-    return [
-        {
-            "name": f"{r.first_name} {r.last_name}",
-            "email": r.email,
-            "score": r.score * 10, # Mocking a score based on activity for now
-            "rank": i + 1
-        }
-        for i, r in enumerate(rankings)
-    ]
+    if subject_id:
+        # Per-subject ranking: Average correctness of all responses for this subject
+        query = db.query(
+            User.id, 
+            User.first_name, 
+            User.last_name, 
+            User.email,
+            func.avg(func.cast(QuizResponse.is_correct, Float)).label('score')
+        ).join(QuizResponse, User.id == QuizResponse.attempt_id) \
+         .join(QuizAttempt, QuizAttempt.id == QuizResponse.attempt_id) \
+         .join(MCQ, MCQ.id == QuizResponse.mcq_id) \
+         .filter(MCQ.subject_id == subject_id) \
+         .group_by(User.id) \
+         .order_by(func.avg(func.cast(QuizResponse.is_correct, Float)).desc())
+    else:
+        # Generic/Pack/Exam ranking: Average score of attempts
+        query = db.query(
+            User.id, 
+            User.first_name, 
+            User.last_name, 
+            User.email,
+            func.avg(QuizAttempt.score).label('score')
+        ).join(QuizAttempt, User.id == QuizAttempt.user_id)
+        
+        if mock_exam_id:
+            query = query.filter(QuizAttempt.mock_exam_id == mock_exam_id)
+        elif pack_id:
+            query = query.filter(QuizAttempt.pack_id == pack_id)
+            
+        query = query.group_by(User.id).order_by(func.avg(QuizAttempt.score).desc())
+
+    # Execute query
+    results = query.limit(50).all()
+
+    # Format with anonymity
+    rankings = []
+    for i, r in enumerate(results):
+        score_val = round(r.score, 1) if subject_id else round(r.score or 0.0, 1)
+        if subject_id: # Convert to percentage if it was a fraction
+             score_val = round(score_val * 100, 1)
+             
+        is_me = r.email == current_user.email
+        rankings.append({
+            "name": f"{r.first_name} {r.last_name}" if is_me else f"Étudiant #{i+1}",
+            "email": r.email if is_me else f"hidden-{i}@qcm.study",
+            "score": score_val,
+            "rank": i + 1,
+            "is_me": is_me
+        })
+
+    return rankings
 
 @router.get("/recent-activity")
 async def get_recent_activity(

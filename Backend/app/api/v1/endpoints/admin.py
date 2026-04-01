@@ -89,6 +89,7 @@ class AdminPackResponse(BaseModel):
     created_by: str
     creator_name: Optional[str]
     mcqs: List[dict] = []
+    academic_sessions: List[str] = []
 
     class Config:
         from_attributes = True
@@ -147,6 +148,7 @@ class AdminQuestionBankResponse(BaseModel):
     student_count: int = 0
     review_count: int = 0
     average_rating: Optional[float] = None
+    academic_sessions: List[str] = []
 
     class Config:
         from_attributes = True
@@ -477,6 +479,9 @@ async def list_packs_admin(
         avg_rating_row = db.query(func.avg(PackReview.rating)).filter(PackReview.pack_id == pack.id).first()
         avg_rating = float(avg_rating_row[0]) if avg_rating_row and avg_rating_row[0] else 0.0
         
+        # Get linked academic sessions
+        academic_sessions = [si.session.name for si in pack.session_items if si.session]
+        
         items.append({
             "id": pack.id,
             "title": pack.title,
@@ -497,7 +502,8 @@ async def list_packs_admin(
             "creator_name": pack.creator_name,
             "sales_count": sales_count,
             "average_rating": round(avg_rating, 1),
-            "mcqs": mcq_data
+            "mcqs": mcq_data,
+            "academic_sessions": academic_sessions
         })
     
     return {
@@ -631,7 +637,8 @@ async def create_pack_admin(
             created_at=pack.created_at,
             created_by=pack.created_by,
             creator_name=pack.creator_name,
-            mcqs=mcq_data
+            mcqs=mcq_data,
+            academic_sessions=[si.session.name for si in pack.session_items if si.session]
         )
     except HTTPException:
         # Re-raise HTTP exceptions as-is
@@ -848,7 +855,8 @@ async def list_question_banks_admin(
             mcqs=mcq_data,
             student_count=student_count,
             review_count=review_count,
-            average_rating=average_rating
+            average_rating=average_rating,
+            academic_sessions=[si.session.name for si in qb.session_items if si.session]
         ))
     
     return {
@@ -929,7 +937,8 @@ async def create_question_bank_admin(
             mcqs=mcq_data,
             student_count=0,
             review_count=0,
-            average_rating=None
+            average_rating=None,
+            academic_sessions=[si.session.name for si in qb.session_items if si.session]
         )
     except HTTPException:
         raise
@@ -1143,7 +1152,8 @@ async def list_mock_exams_admin(
             "created_at": pack.created_at,
             "created_by": pack.created_by,
             "creator_name": pack.creator_name,
-            "mcqs": mcq_data
+            "mcqs": mcq_data,
+            "academic_sessions": [si.session.name for si in pack.session_items if si.session]
         })
 
     return {

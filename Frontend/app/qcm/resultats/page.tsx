@@ -30,9 +30,10 @@ const detailedResults = [
 
 function ResultsContent() {
   const searchParams = useSearchParams()
-  const score = Number.parseInt(searchParams.get("score") || "80")
-  const correct = Number.parseInt(searchParams.get("correct") || "4")
+  const score = Number.parseFloat(searchParams.get("score") || "80")
+  const correct = Number.parseFloat(searchParams.get("correct") || "4")
   const total = Number.parseInt(searchParams.get("total") || "5")
+  const sourceName = searchParams.get("name") || "Entraînement"
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600"
@@ -57,7 +58,9 @@ function ResultsContent() {
             <Trophy className={`h-10 w-10 ${getScoreColor(score)}`} />
           </div>
           <CardTitle className="mt-4 text-3xl font-bold text-foreground">{getScoreMessage(score)}</CardTitle>
-          <CardDescription>Vous avez terminé le QCM</CardDescription>
+          <CardDescription>
+            Vous avez terminé le QCM : <span className="font-semibold">{sourceName}</span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-center">
@@ -68,9 +71,9 @@ function ResultsContent() {
             <div className="text-center">
               <div className="flex items-center justify-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-2xl font-bold text-foreground">{correct}</span>
+                <span className="text-2xl font-bold text-foreground">{correct.toFixed(1)}</span>
               </div>
-              <p className="text-sm text-muted-foreground">Correctes</p>
+              <p className="text-sm text-muted-foreground">Points</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2">

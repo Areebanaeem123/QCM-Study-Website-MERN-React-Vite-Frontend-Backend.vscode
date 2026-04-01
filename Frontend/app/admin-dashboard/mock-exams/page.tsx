@@ -651,6 +651,7 @@ export default function AdminMockExamsPage() {
                   <TableHead>Image</TableHead>
                   <TableHead>Titre</TableHead>
                   <TableHead>Université</TableHead>
+                  <TableHead>Sessions</TableHead>
                   <TableHead>Limite de temps</TableHead>
                   <TableHead>Prix</TableHead>
                   <TableHead>QCM</TableHead>
@@ -661,7 +662,7 @@ export default function AdminMockExamsPage() {
               <TableBody>
                 {(mockExams || []).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Aucun examen blanc trouvé
                     </TableCell>
                   </TableRow>
@@ -681,6 +682,19 @@ export default function AdminMockExamsPage() {
                       </TableCell>
                       <TableCell className="font-medium">{exam.title}</TableCell>
                       <TableCell>{exam.university_name || exam.university_id}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[150px]">
+                          {exam.academic_sessions?.length ? (
+                            exam.academic_sessions.map((session, idx) => (
+                              <Badge key={idx} variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                {session}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-xs italic">Aucune</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {exam.time_limit_minutes ? `${exam.time_limit_minutes} min` : "Illimité"}
                       </TableCell>

@@ -686,6 +686,7 @@ export default function AdminQuestionBanksPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>University</TableHead>
+                  <TableHead>Sessions</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>MCQs</TableHead>
                   <TableHead>Status</TableHead>
@@ -698,6 +699,19 @@ export default function AdminQuestionBanksPage() {
                   <TableRow key={bank.id}>
                     <TableCell className="font-medium">{bank.title}</TableCell>
                     <TableCell>{bank.university_name || bank.university_id}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-[150px]">
+                        {bank.academic_sessions?.length ? (
+                          bank.academic_sessions.map((session, idx) => (
+                            <Badge key={idx} variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                              {session}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-xs italic">Aucune</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {bank.price} {bank.currency}
                     </TableCell>

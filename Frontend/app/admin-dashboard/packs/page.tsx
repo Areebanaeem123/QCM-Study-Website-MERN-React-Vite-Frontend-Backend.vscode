@@ -783,6 +783,7 @@ export default function AdminPacksPage() {
                   <TableHead>Titre</TableHead>
                   <TableHead>Dates</TableHead>
                   <TableHead>Université</TableHead>
+                  <TableHead>Sessions</TableHead>
                   <TableHead>Prix</TableHead>
                   <TableHead>Ventes/Note</TableHead>
                   <TableHead>Statut</TableHead>
@@ -792,7 +793,7 @@ export default function AdminPacksPage() {
               <TableBody>
                 {filteredPacks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Aucun pack trouvé
                     </TableCell>
                   </TableRow>
@@ -821,6 +822,19 @@ export default function AdminPacksPage() {
                         <div className="text-destructive">Au: {new Date(pack.expiry_datetime).toLocaleDateString()}</div>
                       </TableCell>
                       <TableCell>{pack.university_name || pack.university_id}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[150px]">
+                          {pack.academic_sessions?.length ? (
+                            pack.academic_sessions.map((session, idx) => (
+                              <Badge key={idx} variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                {session}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-xs italic">Aucune</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="font-semibold">{pack.price} {pack.currency}</div>
                         <div className="text-xs text-muted-foreground">{pack.mcqs?.length || 0} QCM</div>

@@ -17,7 +17,7 @@ class QuizAttempt(Base):
     
     score = Column(Float, default=0.0)
     total_questions = Column(Integer, default=0)
-    correct_answers = Column(Integer, default=0)
+    correct_answers = Column(Float, default=0.0)
     
     mode = Column(String) # "practice" or "exam"
     time_taken = Column(Integer) # in seconds
@@ -36,6 +36,7 @@ class QuizResponse(Base):
     mcq_id = Column(String, ForeignKey("mcqs.id", ondelete="CASCADE"), nullable=False)
     
     selected_option_id = Column(String, ForeignKey("mcq_options.id", ondelete="CASCADE"), nullable=True)
+    selected_option_ids = Column(Text, nullable=True) # JSON list for evaluate mode
     is_correct = Column(Boolean, default=False)
     
     attempt = relationship("QuizAttempt", back_populates="responses")

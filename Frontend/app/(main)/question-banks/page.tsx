@@ -31,6 +31,7 @@ interface QuestionBank {
   price: number
   currency: string
   university_id: string
+  university_name: string | null
   is_published: boolean
   created_at: string
   created_by: string
@@ -193,7 +194,14 @@ export default function QuestionBanksPage() {
                         </div>
                       )}
                     </div>
-                    <CardTitle className="text-foreground">{bank.title}</CardTitle>
+                    <div className="flex items-center gap-2 mb-1">
+                      <CardTitle className="text-foreground">{bank.title}</CardTitle>
+                      {bank.university_name && (
+                        <Badge variant="secondary" className="text-[10px] h-4 px-1 py-0 bg-blue-100 text-blue-700 border-blue-200">
+                          {bank.university_name}
+                        </Badge>
+                      )}
+                    </div>
                     <CardDescription className="line-clamp-2">
                       {bank.description || "Pas de description disponible"}
                     </CardDescription>

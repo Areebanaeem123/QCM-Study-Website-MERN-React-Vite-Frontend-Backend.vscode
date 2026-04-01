@@ -22,7 +22,7 @@ const sidebarLinks = [
   { href: "/admin-dashboard/packs", label: "Packs", icon: Package },
   { href: "/admin-dashboard/mock-exams", label: "Examens Blancs", icon: Play },
   { href: "/admin-dashboard/question-banks", label: "Banques de Questions", icon: Book },
-  { href: "/admin-dashboard/sessions", label: "Sessions", icon: Clock },
+  { href: "/admin-dashboard/sessions", label: "Sessions Académiques", icon: Clock },
   { href: "/admin-dashboard/research", label: "Recherche", icon: Search },
   { href: "/admin-dashboard/feedback", label: "Commentaires", icon: MessageSquare },
   { href: "/admin-dashboard/statistics", label: "Statistiques", icon: BarChart2 },

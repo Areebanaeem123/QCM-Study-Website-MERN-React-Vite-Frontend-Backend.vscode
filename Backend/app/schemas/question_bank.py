@@ -86,6 +86,7 @@ class QuestionBankUpdate(BaseModel):
 class QuestionBankOut(BaseModel):
     id: str
     university_id: str
+    university_name: Optional[str] = None
     title: str
     description: Optional[str]
     image_url: Optional[str]

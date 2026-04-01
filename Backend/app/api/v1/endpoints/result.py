@@ -40,6 +40,7 @@ def submit_quiz_result(
             attempt_id=db_attempt.id,
             mcq_id=resp.mcq_id,
             selected_option_id=resp.selected_option_id,
+            selected_option_ids=",".join(resp.selected_option_ids) if resp.selected_option_ids else None,
             is_correct=resp.is_correct
         )
         db.add(db_response)

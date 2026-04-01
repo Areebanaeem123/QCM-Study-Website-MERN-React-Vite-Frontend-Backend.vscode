@@ -73,6 +73,7 @@ def create_question_bank(
     return QuestionBankOut(
         id=qb.id,
         university_id=qb.university_id,
+        university_name=university.name,
         title=qb.title,
         description=qb.description,
         image_url=qb.image_url,
@@ -133,6 +134,7 @@ def list_question_banks(
             QuestionBankOut(
                 id=qb.id,
                 university_id=qb.university_id,
+                university_name=qb.university.name if qb.university else None,
                 title=qb.title,
                 description=qb.description,
                 image_url=qb.image_url,
@@ -191,6 +193,7 @@ def get_question_bank(
     return QuestionBankOut(
         id=qb.id,
         university_id=qb.university_id,
+        university_name=qb.university.name if qb.university else None,
         title=qb.title,
         description=qb.description,
         image_url=qb.image_url,
@@ -253,6 +256,7 @@ def update_question_bank(
     return QuestionBankOut(
         id=qb.id,
         university_id=qb.university_id,
+        university_name=qb.university.name if qb.university else None,
         title=qb.title,
         description=qb.description,
         image_url=qb.image_url,

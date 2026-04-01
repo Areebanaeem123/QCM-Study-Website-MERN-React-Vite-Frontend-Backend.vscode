@@ -47,3 +47,4 @@ class QuestionBank(Base):
     )
     purchases = relationship("QuestionBankPurchase", back_populates="question_bank", cascade="all, delete-orphan")
     reviews = relationship("QuestionBankReview", back_populates="question_bank", cascade="all, delete-orphan")
+    session_items = relationship("SessionItem", back_populates="question_bank", cascade="all, delete-orphan")

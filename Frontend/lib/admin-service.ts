@@ -292,22 +292,7 @@ export interface MCQWithApprovalsResponse extends MCQ {
   approvals: MCQApprovalResponse[]
 }
 
-export interface PackResponse {
-  id: string
-  university_id: string
-  type: string
-  title: string
-  description?: string
-  price: number
-  currency: string
-  start_datetime: datetime | string
-  expiry_datetime: datetime | string
-  display_before_start: boolean
-  time_limit_minutes?: number
-  is_published: boolean
-  created_at: string
-  creator_name?: string
-}
+// PackResponse is moved below to avoid duplication
 
 export interface PacksListResponse {
   items: PackResponse[]
@@ -348,6 +333,7 @@ export interface PackResponse {
   sales_count?: number
   average_rating?: number
   mcqs?: MCQ[]
+  academic_sessions?: string[]
 }
 
 export interface PackPurchaser {
@@ -424,6 +410,7 @@ export interface QuestionBankResponse {
   student_count?: number
   review_count?: number
   average_rating?: number | null
+  academic_sessions?: string[]
 }
 
 export interface CreateQuestionBankRequest {

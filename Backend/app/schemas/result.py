@@ -5,6 +5,7 @@ from datetime import datetime
 class QuizResponseCreate(BaseModel):
     mcq_id: str
     selected_option_id: Optional[str] = None
+    selected_option_ids: Optional[List[str]] = None
     is_correct: bool
 
 class QuizResultSubmit(BaseModel):
@@ -13,7 +14,7 @@ class QuizResultSubmit(BaseModel):
     mock_exam_id: Optional[str] = None
     score: float
     total_questions: int
-    correct_answers: int
+    correct_answers: float
     mode: str # "practice" or "exam"
     time_taken: int # in seconds
     responses: List[QuizResponseCreate]

@@ -33,4 +33,4 @@ class SessionItem(Base):
     session = relationship("Session", back_populates="session_items")  
     pack = relationship("Pack", back_populates="session_items")
     mock_exam = relationship("MockExam", back_populates="session_items")
-    question_bank = relationship("QuestionBank")
+    question_bank = relationship("QuestionBank", back_populates="session_items")

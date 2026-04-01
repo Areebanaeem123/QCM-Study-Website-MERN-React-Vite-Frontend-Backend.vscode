@@ -115,11 +115,12 @@ export class DashboardService {
   /**
    * Get global or pack-specific student rankings
    */
-  static async getRankings(packId?: string, mockExamId?: string): Promise<Ranking[]> {
+  static async getRankings(packId?: string, mockExamId?: string, subjectId?: string): Promise<Ranking[]> {
     try {
       const params = new URLSearchParams()
       if (packId) params.append("pack_id", packId)
       if (mockExamId) params.append("mock_exam_id", mockExamId)
+      if (subjectId) params.append("subject_id", subjectId)
       
       const queryString = params.toString()
       const endpoint = queryString ? `/dashboard/rankings?${queryString}` : "/dashboard/rankings"
@@ -214,7 +215,8 @@ export class DashboardService {
     time_taken: number;
     responses: {
       mcq_id: string;
-      selected_option_id: string | null;
+      selected_option_id?: string | null;
+      selected_option_ids?: string[] | null;
       is_correct: boolean;
     }[];
   }): Promise<any> {
@@ -232,6 +234,17 @@ export class DashboardService {
     } catch (error: any) {
       console.error("Failed to checkout basket:", error)
       throw new Error(error?.message || "Failed to process purchase")
+    }
+  }
+
+  /**
+   * Get all subjects (publicly accessible)
+   */
+  static async getSubjects(): Promise<{id: string, name: string}[]> {
+    try {
+      return await ApiClient.get<{id: string, name: string}[]>(`/subjects/`)
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to load subjects")
     }
   }
 }
