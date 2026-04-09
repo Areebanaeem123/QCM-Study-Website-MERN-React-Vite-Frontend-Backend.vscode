@@ -95,10 +95,8 @@ async def create_payment_intent(
 
         payment_intent = StripeService.create_payment_intent(
             amount_cents=amount_cents,
-            currency="usd",  # Or use from config
             customer_email=current_user.email,
-            metadata=metadata,
-            payment_method_types=["card", "apple_pay", "google_pay"]
+            metadata=metadata
         )
 
         # Create transaction record (pending)

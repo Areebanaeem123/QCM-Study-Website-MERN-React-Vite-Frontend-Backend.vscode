@@ -28,7 +28,7 @@ class StripeService:
     @staticmethod
     def create_payment_intent(
         amount_cents: int,
-        currency: str = "usd",
+        currency: str = settings.STRIPE_CURRENCY,
         customer_email: str = None,
         metadata: Dict[str, Any] = None,
         payment_method_types: list = None

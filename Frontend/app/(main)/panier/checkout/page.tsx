@@ -436,55 +436,60 @@ export default function CheckoutPage() {
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Méthode de paiement</h4>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <label className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition ${paymentMethod === 'card' ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''}`}>
                   <input
                     type="radio"
                     name="payment"
                     value="card"
-                    checked={paymentMethod === "card"}
+                    checked={paymentMethod === 'card'}
                     onChange={(e) => setPaymentMethod("card" as any)}
                     className="w-4 h-4"
                   />
-                  <span className="font-medium">Carte bancaire</span>
+                  <span className="font-medium">Carte de crédit</span>
                 </label>
 
-                <label className="flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition opacity-50 pointer-events-none">
+                <label className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition ${paymentMethod === 'apple_pay' ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''}`}>
                   <input
                     type="radio"
                     name="payment"
                     value="apple_pay"
-                    disabled
+                    checked={paymentMethod === 'apple_pay'}
+                    onChange={(e) => setPaymentMethod("apple_pay" as any)}
                     className="w-4 h-4"
                   />
                   <span className="font-medium">Apple Pay</span>
-                  <span className="text-xs text-muted-foreground ml-auto">(Bientôt)</span>
                 </label>
 
-                <label className="flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition opacity-50 pointer-events-none">
+                <label className={`flex items-center gap-3 p-4 rounded-md border cursor-pointer hover:bg-muted transition ${paymentMethod === 'google_pay' ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''}`}>
                   <input
                     type="radio"
                     name="payment"
                     value="google_pay"
-                    disabled
+                    checked={paymentMethod === 'google_pay'}
+                    onChange={(e) => setPaymentMethod("google_pay" as any)}
                     className="w-4 h-4"
                   />
                   <span className="font-medium">Google Pay</span>
-                  <span className="text-xs text-muted-foreground ml-auto">(Bientôt)</span>
                 </label>
               </div>
             </div>
 
-            {paymentMethod === "card" && (
-              <Elements stripe={stripePromise}>
+            {clientSecret ? (
+              <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                 <StripePaymentForm
                   amount={totalPrice}
                   isLoading={loading}
                   clientSecret={clientSecret}
+                  paymentMethod={paymentMethod}
                   onSuccess={handlePaymentSuccess}
                   onError={(msg) => setError(msg)}
                 />
               </Elements>
+            ) : (
+              <div className="p-8 text-center border rounded-lg bg-muted/20">
+                <p className="text-sm text-muted-foreground">Initialisation du paiement...</p>
+              </div>
             )}
 
             {error && (

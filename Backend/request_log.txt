@@ -521,3 +521,12 @@ POST /api/v1/auth/login - Status: 200 - Duration: 0.9753s
 GET /api/v1/auth/me - Status: 200 - Duration: 0.0144s
 GET /api/v1/auth/me - Status: 200 - Duration: 0.0070s
 GET /api/v1/packs/ - Status: 200 - Duration: 0.0382s
+GET /api/v1/auth/me - Status: 200 - Duration: 3.5716s
+GET /api/v1/packs/ - Status: 200 - Duration: 3.6375s
+POST /api/v1/basket/create-payment-intent - Status: 200 - Duration: 3.9330s
+POST /api/v1/basket/create-payment-intent - Status: 200 - Duration: 0.6669s
+POST /api/v1/basket/confirm-payment - Status: 200 - Duration: 1.8862s
+GET /api/v1/mock_exams_admin/ - Status: 200 - Duration: 0.4095s
+POST /api/v1/basket/create-payment-intent - Status: 200 - Duration: 0.8832s
+GET /api/v1/auth/me - Status: 200 - Duration: 0.4690s
+POST /api/v1/basket/create-payment-intent - Status: 200 - Duration: 1.1296s
