@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { BookOpen, Search, Users, Layers, Loader2, Star, ShoppingCart } from "lucide-react"
 import { ApiClient } from "@/lib/api-client"
+import { DashboardService, StoreQuestionBank } from "@/lib/dashboard-service"
 
 interface QuestionBankReview {
   student_id: string
@@ -85,8 +86,8 @@ const questionBanks = [
 ]
 
 export default function QuestionBanksPage() {
-  const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([])
-  const [filteredBanks, setFilteredBanks] = useState<QuestionBank[]>([])
+  const [questionBanks, setQuestionBanks] = useState<StoreQuestionBank[]>([])
+  const [filteredBanks, setFilteredBanks] = useState<StoreQuestionBank[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,8 +104,8 @@ export default function QuestionBanksPage() {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await ApiClient.get<QuestionBank[]>("/question_banks/")
-      setQuestionBanks(data || [])
+      const data = await DashboardService.getAvailableQuestionBanks()
+      setQuestionBanks(Array.isArray(data) ? data : [])
     } catch (error: any) {
       console.error("Failed to fetch question banks:", error)
       setError("Impossible de charger les banques de QCM. Veuillez réessayer.")
@@ -114,8 +115,12 @@ export default function QuestionBanksPage() {
   }
 
   const filterBanks = () => {
+    if (!Array.isArray(questionBanks)) {
+      setFilteredBanks([])
+      return
+    }
     const filtered = questionBanks.filter((bank) =>
-      bank.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (bank.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (bank.description && bank.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     setFilteredBanks(filtered)
@@ -179,7 +184,7 @@ export default function QuestionBanksPage() {
         {!isLoading && !error && filteredBanks.length > 0 && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredBanks.map((bank) => {
-              const avgRating = calculateAverageRating(bank.reviews)
+              const avgRating = calculateAverageRating(bank.reviews || [])
               return (
                 <Card key={bank.id} className="flex flex-col hover:shadow-lg transition-shadow">
                   <CardHeader>

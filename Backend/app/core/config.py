@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     # CORS - can be comma-separated string or JSON array
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
     
+    # Stripe
+    STRIPE_PUBLIC_KEY: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS_ORIGINS into a list."""
@@ -28,6 +32,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()
 

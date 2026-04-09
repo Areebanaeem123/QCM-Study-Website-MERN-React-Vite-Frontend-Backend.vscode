@@ -68,8 +68,14 @@ export interface StoreQuestionBank {
   id: string
   title: string
   description?: string
+  image_url?: string
   price: number
   currency: string
+  university_id?: string
+  university_name?: string
+  mcqs?: any[]
+  students?: any[]
+  reviews?: any[]
 }
 
 export interface StoreMockExam {
@@ -137,9 +143,15 @@ export class DashboardService {
    */
   static async getAvailablePacks(): Promise<StorePack[]> {
     try {
-      return await ApiClient.get<StorePack[]>("/packs/")
+      const response = await ApiClient.get<StorePack[]>("/packs/")
+      return Array.isArray(response) ? response : []
     } catch (error: any) {
-      console.error("Failed to fetch available packs:", error)
+      console.error("Failed to fetch available packs details:", {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        detail: error?.detail,
+        error: error
+      })
       return []
     }
   }
@@ -161,9 +173,15 @@ export class DashboardService {
    */
   static async getAvailableQuestionBanks(): Promise<StoreQuestionBank[]> {
     try {
-      return await ApiClient.get<StoreQuestionBank[]>("/question_banks/")
+      const response = await ApiClient.get<StoreQuestionBank[]>("/question_banks/")
+      return Array.isArray(response) ? response : []
     } catch (error: any) {
-      console.error("Failed to fetch available question banks:", error)
+      console.error("Failed to fetch available question banks:", {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        detail: error?.detail,
+        error: error
+      })
       return []
     }
   }
@@ -173,9 +191,15 @@ export class DashboardService {
    */
   static async getAvailableMockExams(): Promise<StoreMockExam[]> {
     try {
-      return await ApiClient.get<StoreMockExam[]>("/mock_exams_admin/")
+      const response = await ApiClient.get<StoreMockExam[]>("/mock_exams_admin/")
+      return Array.isArray(response) ? response : []
     } catch (error: any) {
-      console.error("Failed to fetch available mock exams:", error)
+      console.error("Failed to fetch available mock exams details:", {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        detail: error?.detail,
+        error: error
+      })
       return []
     }
   }

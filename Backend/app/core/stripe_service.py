@@ -17,10 +17,11 @@ from app.models.pack_purchase import PackPurchase
 from app.models.mock_exam_purchase import MockExamPurchase
 from app.models.pack import Pack
 from app.models.mock_exam import MockExam
+from app.core.config import settings
 
 # Initialize Stripe
 if stripe:
-    stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_placeholder")
+    stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class StripeService:
     """Service for handling Stripe payments"""
@@ -56,13 +57,12 @@ class StripeService:
             intent = stripe.PaymentIntent.create(
                 amount=amount_cents,
                 currency=currency,
-                payment_method_types=payment_method_types,
                 receipt_email=customer_email,
                 metadata=metadata or {},
                 automatic_payment_methods={"enabled": True}  # Enable automatic payment methods
             )
             return intent
-        except stripe.error.StripeException as e:
+        except stripe.error.StripeError as e:
             raise Exception(f"Stripe error: {e.user_message}")
 
     @staticmethod
@@ -96,7 +96,7 @@ class StripeService:
             
             intent.confirm(**confirm_kwargs)
             return intent
-        except stripe.error.StripeException as e:
+        except stripe.error.StripeError as e:
             raise Exception(f"Stripe error: {e.user_message}")
 
     @staticmethod
@@ -108,7 +108,7 @@ class StripeService:
         try:
             intent = stripe.PaymentIntent.retrieve(payment_intent_id)
             return intent
-        except stripe.error.StripeException as e:
+        except stripe.error.StripeError as e:
             raise Exception(f"Stripe error: {e.user_message}")
 
     @staticmethod
@@ -128,7 +128,7 @@ class StripeService:
                 metadata=metadata or {}
             )
             return customer
-        except stripe.error.StripeException as e:
+        except stripe.error.StripeError as e:
             raise Exception(f"Stripe error: {e.user_message}")
 
     @staticmethod
@@ -161,7 +161,7 @@ class StripeService:
             # For Apple Pay and Google Pay, the payment method is typically
             # created on the client side
             raise ValueError(f"Unsupported payment method type: {type_str}")
-        except stripe.error.StripeException as e:
+        except stripe.error.StripeError as e:
             raise Exception(f"Stripe error: {e.user_message}")
 
     @staticmethod

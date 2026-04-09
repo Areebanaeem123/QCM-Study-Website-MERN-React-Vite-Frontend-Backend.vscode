@@ -20,7 +20,16 @@ interface ApiError {
 
 export class ApiClient {
   // Public endpoints that don't require authentication
-  static publicEndpoints = ["/auth/login", "/auth/register", "/auth/refresh", "/universities/", "/question_banks/", "/packs/", "/subjects/"]
+  static publicEndpoints = [
+    "/auth/login", 
+    "/auth/register", 
+    "/auth/refresh", 
+    "/universities/", 
+    "/question_banks/", 
+    "/packs/", 
+    "/subjects/",
+    "/mock_exams_admin/"
+  ]
 
   static async request<T>(
     endpoint: string,
@@ -48,7 +57,13 @@ export class ApiClient {
     }
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    const timeoutId = setTimeout(() => {
+      try {
+        controller.abort("Request timeout")
+      } catch (e) {
+        controller.abort() // Fallback for older browsers
+      }
+    }, 60000) // 60 second timeout
 
     try {
       console.log(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body })
@@ -57,7 +72,6 @@ export class ApiClient {
         headers,
         signal: controller.signal
       })
-      clearTimeout(timeoutId)
 
       // Handle unauthorized - but NOT for public endpoints (they have real 401 errors to show)
       if (response.status === 401) {
@@ -69,10 +83,10 @@ export class ApiClient {
           const newToken = await this.refreshAccessToken(refreshToken)
           if (newToken) {
             headers["Authorization"] = `Bearer ${newToken}`
+            // Recursive call will have its own timeout and controller
             return this.request<T>(endpoint, {
               ...options,
               headers: {
-                "Content-Type": "application/json",
                 ...options.headers,
                 ...headers,
               },
@@ -106,10 +120,12 @@ export class ApiClient {
           url,
           parseError: parseError instanceof Error ? parseError.message : String(parseError)
         })
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Invalid response format`)
-        }
+        // Even for 200 OK, if we can't parse the JSON, it's an error we should throw
+        throw new Error(`HTTP ${response.status}: Invalid JSON response format`)
       }
+
+      // Clear timeout after successful parsing
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         // Handle Pydantic validation errors (422)
@@ -142,12 +158,20 @@ export class ApiClient {
 
       return data as T
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      // Ensure timeout is cleared even on exception
+      clearTimeout(timeoutId)
+      
+      console.error(`[API] Execution error for ${url}:`, error)
+      
+      // Handle AbortError (timeout)
+      if (error.name === 'AbortError' || error.message === 'Request timeout') {
         throw {
           status: 0,
           message: "La requête a expiré. Veuillez vérifier votre connexion.",
+          detail: "Request exceeded timeout limit (60s)"
         } as ApiError
       }
+      
       // If it's already an ApiError (thrown above), just rethrow it
       if (error && typeof error === 'object' && 'status' in error) {
         throw error
@@ -162,6 +186,7 @@ export class ApiClient {
       throw {
         status: 0,
         message: errorMsg,
+        error_object: error
       } as ApiError
     }
   }

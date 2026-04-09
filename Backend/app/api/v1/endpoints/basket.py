@@ -4,10 +4,9 @@ from typing import List, Optional
 from datetime import datetime
 import uuid
 import json
-# import stripe  # Disabled for testing
-
+import stripe
 from app.core.database import get_db
-# from app.core.stripe_service import StripeService  # Disabled for testing
+from app.core.stripe_service import StripeService
 from app.core.email_service import EmailService
 from app.models.user import User
 from app.models.pack import Pack
@@ -192,7 +191,14 @@ async def confirm_payment(
         # Update transaction
         transaction.status = "completed"
         transaction.completed_at = datetime.utcnow()
-        transaction.stripe_charge_id = payment_intent.charges.data[0].id if payment_intent.charges.data else None
+        
+        # Robustly extract charge ID
+        if hasattr(payment_intent, 'latest_charge') and payment_intent.latest_charge:
+            transaction.stripe_charge_id = payment_intent.latest_charge
+        elif hasattr(payment_intent, 'charges') and payment_intent.charges.data:
+            transaction.stripe_charge_id = payment_intent.charges.data[0].id
+        else:
+            transaction.stripe_charge_id = None
 
         # Extract card last 4
         if payment_intent.payment_method:

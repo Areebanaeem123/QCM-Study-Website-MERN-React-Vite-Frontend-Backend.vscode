@@ -572,8 +572,14 @@ export class AdminService {
    */
   static async getUniversities(): Promise<University[]> {
     try {
-      return await ApiClient.get<University[]>(`/admin/universities`)
+      const response = await ApiClient.get<University[]>(`/admin/universities`)
+      return Array.isArray(response) ? response : []
     } catch (error: any) {
+      console.error("Failed to fetch universities in AdminService:", {
+        message: error?.message,
+        status: error?.status,
+        error
+      })
       throw new Error(error.message || "Échec du chargement des universités")
     }
   }
@@ -1003,10 +1009,28 @@ export class AdminService {
       params.append("skip", skip.toString())
       params.append("limit", limit.toString())
 
-      return await ApiClient.get<PacksListResponse>(
+      const response = await ApiClient.get<any>(
         `/admin/packs?${params.toString()}`
       )
+      
+      // Ensure we return a valid object structure even if API returns plain array or malformed data
+      if (Array.isArray(response)) {
+        return { items: response, total: response.length, skip, limit }
+      }
+      
+      return {
+        items: Array.isArray(response?.items) ? response.items : [],
+        total: response?.total || 0,
+        skip: response?.skip || skip,
+        limit: response?.limit || limit
+      }
     } catch (error: any) {
+      console.error("Failed to fetch packs in AdminService:", {
+        message: error?.message || "Unknown error",
+        status: error?.status,
+        detail: error?.detail,
+        error: error
+      })
       throw new Error(error.message || "Failed to fetch packs")
     }
   }
@@ -1105,10 +1129,27 @@ export class AdminService {
       params.append("skip", skip.toString())
       params.append("limit", limit.toString())
 
-      return await ApiClient.get<PacksListResponse>(
+      const response = await ApiClient.get<any>(
         `/admin/mock-exams?${params.toString()}`
       )
+      
+      // Handle potential raw array or list response
+      if (Array.isArray(response)) {
+        return { items: response, total: response.length, skip, limit }
+      }
+      
+      return {
+        items: Array.isArray(response?.items) ? response.items : [],
+        total: response?.total || 0,
+        skip: response?.skip || skip,
+        limit: response?.limit || limit
+      }
     } catch (error: any) {
+      console.error("Failed to fetch mock exams in AdminService:", {
+        message: error?.message,
+        status: error?.status,
+        error
+      })
       throw new Error(error.message || "Failed to fetch mock exams")
     }
   }
@@ -1180,10 +1221,26 @@ export class AdminService {
       params.append("skip", skip.toString())
       params.append("limit", limit.toString())
 
-      return await ApiClient.get<QuestionBanksListResponse>(
+      const response = await ApiClient.get<any>(
         `/admin/question-banks?${params.toString()}`
       )
+      
+      if (Array.isArray(response)) {
+        return { items: response, total: response.length, skip, limit }
+      }
+      
+      return {
+        items: Array.isArray(response?.items) ? response.items : [],
+        total: response?.total || 0,
+        skip: response?.skip || skip,
+        limit: response?.limit || limit
+      }
     } catch (error: any) {
+      console.error("Failed to fetch question banks in AdminService:", {
+        message: error?.message,
+        status: error?.status,
+        error
+      })
       throw new Error(error.message || "Failed to fetch question banks")
     }
   }

@@ -12,154 +12,13 @@ import { useRouter } from "next/navigation"
 import { PaymentService } from "@/lib/payment-service"
 import { MockPaymentService } from "@/lib/mock-payment-service"
 import Link from "next/link"
-// COMMENTED OUT: Stripe imports (Not available in Pakistan)
-// import { loadStripe } from "@stripe/stripe-js"
-// import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
+import { loadStripe } from "@stripe/stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
+import { StripePaymentForm } from "@/components/checkout/stripe-payment-form"
 
-// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder")
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder")
 
-// MOCK: Dummy Stripe implementation for testing
-const generateMockPaymentIntentId = () => `pi_mock_${Math.random().toString(36).substr(2, 9)}`
-const generateMockPaymentMethodId = () => `pm_mock_${Math.random().toString(36).substr(2, 9)}`
 
-// Mock Payment form component (replaces Stripe CardElement)
-function MockPaymentForm({
-  onSuccess,
-  onError,
-  isLoading,
-  amount,
-  handleTestPayment
-}: {
-  onSuccess: (intentId: string) => void
-  onError: (error: string) => void
-  isLoading: boolean
-  amount: number
-  handleTestPayment: () => void
-}) {
-  const [processing, setProcessing] = useState(false)
-  const [cardError, setCardError] = useState("")
-  const [cardNumber, setCardNumber] = useState("")
-  const [expiryDate, setExpiryDate] = useState("")
-  const [cvc, setCvc] = useState("")
-
-  const handlePayment = async () => {
-    setProcessing(true)
-    setCardError("")
-
-    try {
-      // Validate mock card input
-      if (!cardNumber.trim() || cardNumber.replace(/\s/g, "").length < 13) {
-        setCardError("Please enter a valid card number (minimum 13 digits)")
-        setProcessing(false)
-        return
-      }
-
-      if (!expiryDate.trim() || !expiryDate.includes("/")) {
-        setCardError("Please enter expiry date in MM/YY format")
-        setProcessing(false)
-        return
-      }
-
-      if (!cvc.trim() || cvc.length < 3) {
-        setCardError("Please enter a valid CVC")
-        setProcessing(false)
-        return
-      }
-
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Generate mock payment method ID
-      const mockMethodId = generateMockPaymentMethodId()
-      onSuccess(mockMethodId)
-    } catch (err: any) {
-      const msg = err.message || "Payment processing error"
-      setCardError(msg)
-      onError(msg)
-      setProcessing(false)
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* MOCK NOTICE */}
-      <div className="rounded-md bg-yellow-50 border border-yellow-200 p-3 flex gap-2">
-        <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
-        <div className="text-sm text-yellow-700">
-          <strong>Testing Mode:</strong> This is a mock payment form. Stripe is not available in Pakistan. 
-          <br/><span className="text-xs">Enter any values to test the checkout flow.</span>
-        </div>
-      </div>
-
-      {/* Mock card input fields */}
-      <div className="space-y-4 border rounded-md p-4 bg-white">
-        <div>
-          <label className="block text-sm font-medium mb-1">Card Number</label>
-          <input
-            type="text"
-            placeholder="4242 4242 4242 4242"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, "").replace(/(\d{4})/g, "$1 ").trim())}
-            disabled={processing || isLoading}
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Expiry Date</label>
-            <input
-              type="text"
-              placeholder="MM/YY"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              disabled={processing || isLoading}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">CVC</label>
-            <input
-              type="text"
-              placeholder="123"
-              value={cvc}
-              onChange={(e) => setCvc(e.target.value)}
-              disabled={processing || isLoading}
-              maxLength={4}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </div>
-      </div>
-
-      {cardError && (
-        <div className="text-sm text-destructive font-medium">
-          {cardError}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={handlePayment}
-          disabled={processing || isLoading}
-        >
-          {processing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>Confirm Payment {amount.toFixed(2)} DT</>
-          )}
-        </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          [MOCK MODE] This is a simulated payment. No charges will be made.
-        </p>
-      </div>
-    </div>
-  )
-}
 
 // Main checkout page
 export default function CheckoutPage() {
@@ -175,6 +34,7 @@ export default function CheckoutPage() {
   const [applyingVoucher, setApplyingVoucher] = useState(false)
   const [transactionId, setTransactionId] = useState<string | null>(null)
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
 
   // Auth Guard
   useEffect(() => {
@@ -206,11 +66,8 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      // COMMENTED OUT: Real API call
-      // const result = await PaymentService.validateVoucher(...)
-
-      // MOCK: Using mock voucher validation
-      const result = await MockPaymentService.validateVoucher(
+      // Real API call
+      const result = await PaymentService.validateVoucher(
         voucherCode,
         originalPrice,
         items.map(item => ({
@@ -251,11 +108,8 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      // COMMENTED OUT: Real API call
-      // const response = await PaymentService.createPaymentIntent({...})
-
-      // MOCK: Using mock payment intent creation
-      const response = await MockPaymentService.createPaymentIntent({
+      // Real API call
+      const response = await PaymentService.createPaymentIntent({
         items: items.map(item => ({
           id: item.id,
           type: item.type,
@@ -269,6 +123,7 @@ export default function CheckoutPage() {
       })
 
       setPaymentIntentId(response.payment_intent_id)
+      setClientSecret(response.client_secret)
       setTransactionId(response.transaction_id)
       setStep("payment")
     } catch (err: any) {
@@ -285,11 +140,8 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      // COMMENTED OUT: Real API call
-      // const response = await PaymentService.confirmPayment({...})
-
-      // MOCK: Using mock payment confirmation
-      const response = await MockPaymentService.confirmPayment({
+      // Real API call
+      const response = await PaymentService.confirmPayment({
         payment_intent_id: paymentIntentId,
         transaction_id: transactionId
       })
@@ -624,25 +476,15 @@ export default function CheckoutPage() {
             </div>
 
             {paymentMethod === "card" && (
-              // COMMENTED OUT: Stripe Elements wrapper (not available in Pakistan)
-              // <Elements stripe={stripePromise}>
-              //   <StripePaymentForm
-              //     amount={totalPrice}
-              //     isLoading={loading}
-              //     onSuccess={handlePaymentSuccess}
-              //     onError={(msg) => setError(msg)}
-              //     handleTestPayment={handleTestPayment}
-              //   />
-              // </Elements>
-
-              // MOCK: Using mock payment form for testing
-              <MockPaymentForm
-                amount={totalPrice}
-                isLoading={loading}
-                onSuccess={handlePaymentSuccess}
-                onError={(msg) => setError(msg)}
-                handleTestPayment={handleTestPayment}
-              />
+              <Elements stripe={stripePromise}>
+                <StripePaymentForm
+                  amount={totalPrice}
+                  isLoading={loading}
+                  clientSecret={clientSecret}
+                  onSuccess={handlePaymentSuccess}
+                  onError={(msg) => setError(msg)}
+                />
+              </Elements>
             )}
 
             {error && (
@@ -656,16 +498,10 @@ export default function CheckoutPage() {
               Retour
             </Button>
 
-            <div className="flex items-center justify-center gap-2 text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
-              <AlertCircle className="h-4 w-4" />
-              TESTING MODE: Using mock payment (Stripe not available in Pakistan)
-            </div>
-            {/* COMMENTED OUT: Original Stripe security notice
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="h-4 w-4" />
+              <ShieldCheck className="h-4 w-4 text-green-600" />
               Paiement 100% sécurisé par Stripe
             </div>
-            */}
           </CardContent>
         </Card>
       )}
