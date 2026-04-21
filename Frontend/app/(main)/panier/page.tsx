@@ -116,15 +116,15 @@ export default function BasketPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Sous-total ({totalItems} articles)</span>
-                <span>{totalPrice} DT</span>
+                <span>{totalPrice} €</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">TVA (0%)</span>
-                <span>0 DT</span>
+                <span>0 €</span>
               </div>
               <div className="border-t border-border pt-4 flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">{totalPrice} DT</span>
+                <span className="text-primary">{totalPrice} €</span>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">

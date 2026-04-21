@@ -42,7 +42,7 @@ export default function PacksPage() {
       id: pack.id,
       title: pack.title,
       price: pack.price,
-      currency: pack.currency || "DT",
+      currency: pack.currency || "EUR",
       type: "pack",
       image_url: pack.image_url,
     })
@@ -134,7 +134,7 @@ export default function PacksPage() {
               </CardContent>
               <CardFooter className="flex items-center justify-between border-t border-border pt-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-foreground">{pack.price} DT</span>
+                  <span className="text-2xl font-bold text-foreground">{pack.price} €</span>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleAddToBasket(pack)} disabled={isInBasket(pack.id)}>

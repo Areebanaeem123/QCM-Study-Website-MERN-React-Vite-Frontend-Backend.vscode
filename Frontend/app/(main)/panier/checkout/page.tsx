@@ -229,17 +229,17 @@ export default function CheckoutPage() {
             <div className="rounded-lg border border-border p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Sous-total</span>
-                <span>{originalPrice.toFixed(2)} DT</span>
+                <span>{originalPrice.toFixed(2)} €</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Réduction</span>
-                  <span>-{discountAmount.toFixed(2)} DT</span>
+                  <span>-{discountAmount.toFixed(2)} €</span>
                 </div>
               )}
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">{totalPrice.toFixed(2)} DT</span>
+                <span className="text-primary">{totalPrice.toFixed(2)} €</span>
               </div>
             </div>
           </CardContent>
@@ -269,7 +269,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-green-700">Code appliqué: {voucher.code}</p>
-                    <p className="text-sm text-green-600">Réduction: {discountAmount.toFixed(2)} DT</p>
+                    <p className="text-sm text-green-600">Réduction: {discountAmount.toFixed(2)} €</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -312,17 +312,17 @@ export default function CheckoutPage() {
             <div className="rounded-lg bg-muted p-4 space-y-2">
               <div className="flex justify-between">
                 <span>Sous-total</span>
-                <span>{originalPrice.toFixed(2)} DT</span>
+                <span>{originalPrice.toFixed(2)} €</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Réduction</span>
-                  <span>-{discountAmount.toFixed(2)} DT</span>
+                  <span>-{discountAmount.toFixed(2)} €</span>
                 </div>
               )}
               <div className="border-t pt-2 flex justify-between font-bold">
                 <span>Total</span>
-                <span className="text-primary">{totalPrice.toFixed(2)} DT</span>
+                <span className="text-primary">{totalPrice.toFixed(2)} €</span>
               </div>
             </div>
           </CardContent>
@@ -418,18 +418,18 @@ export default function CheckoutPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span>Sous-total</span>
-                  <span>{originalPrice.toFixed(2)} DT</span>
+                  <span>{originalPrice.toFixed(2)} €</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Réduction</span>
-                    <span>-{discountAmount.toFixed(2)} DT</span>
+                    <span>-{discountAmount.toFixed(2)} €</span>
                   </div>
                 )}
               </div>
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total à payer</span>
-                <span className="text-primary">{totalPrice.toFixed(2)} DT</span>
+                <span className="text-primary">{totalPrice.toFixed(2)} €</span>
               </div>
             </div>
 
@@ -481,7 +481,7 @@ export default function CheckoutPage() {
                   amount={totalPrice}
                   isLoading={loading}
                   clientSecret={clientSecret}
-                  paymentMethod={paymentMethod}
+                  paymentMethod={paymentMethod || "card"}
                   onSuccess={handlePaymentSuccess}
                   onError={(msg) => setError(msg)}
                 />

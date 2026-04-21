@@ -42,7 +42,7 @@ export default function ExamsPage() {
       id: exam.id,
       title: exam.title,
       price: exam.price || 0,
-      currency: exam.currency || "DT",
+      currency: exam.currency || "EUR",
       type: "mock_exam",
       image_url: exam.image_url,
     })
@@ -158,7 +158,7 @@ export default function ExamsPage() {
                 </CardContent>
                 <CardFooter className="flex items-center justify-between border-t border-border pt-4 gap-2">
                   <span className="text-xl font-bold text-foreground">
-                    {exam.price} {exam.currency === "CHF" ? "CHF" : "DT"}
+                    {exam.price} {exam.currency === "CHF" ? "CHF" : "€"}
                   </span>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleAddToBasket(exam)} disabled={isInBasket(exam.id)}>

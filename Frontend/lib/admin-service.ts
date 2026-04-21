@@ -317,7 +317,7 @@ export interface PackResponse {
   description?: string
   type: "pack" | "mock_exam"
   price: number
-  currency: "CHF" | "GBP" | "USD"
+  currency: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime: string
   expiry_datetime: string
   display_before_start: boolean
@@ -357,7 +357,7 @@ export interface CreatePackRequest {
   description?: string
   type: "pack" | "mock_exam"
   price: number
-  currency: "CHF" | "GBP" | "USD"
+  currency: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime: string
   expiry_datetime: string
   display_before_start: boolean
@@ -373,7 +373,7 @@ export interface UpdatePackRequest {
   description?: string
   type?: "pack" | "mock_exam"
   price?: number
-  currency?: "CHF" | "GBP" | "USD"
+  currency?: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime?: string
   expiry_datetime?: string
   display_before_start?: boolean
@@ -394,7 +394,7 @@ export interface QuestionBankResponse {
   title: string
   description?: string
   price: number
-  currency: "CHF" | "GBP" | "USD"
+  currency: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime: string
   expiry_datetime: string
   display_before_start: boolean
@@ -417,7 +417,7 @@ export interface CreateQuestionBankRequest {
   title: string
   description?: string
   price: number
-  currency: "CHF" | "GBP" | "USD"
+  currency: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime: string
   expiry_datetime: string
   display_before_start: boolean
@@ -431,7 +431,7 @@ export interface UpdateQuestionBankRequest {
   title?: string
   description?: string
   price?: number
-  currency?: "CHF" | "GBP" | "USD"
+  currency?: "CHF" | "GBP" | "USD" | "EUR" | "TND"
   start_datetime?: string
   expiry_datetime?: string
   display_before_start?: boolean

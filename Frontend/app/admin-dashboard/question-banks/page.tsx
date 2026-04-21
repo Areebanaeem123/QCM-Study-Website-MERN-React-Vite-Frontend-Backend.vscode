@@ -55,7 +55,7 @@ export default function AdminQuestionBanksPage() {
     description: "",
     university_id: "",
     price: 0,
-    currency: "CHF" as "CHF" | "GBP" | "USD",
+    currency: "CHF" as "CHF" | "GBP" | "USD" | "EUR" | "TND",
     start_datetime: "",
     expiry_datetime: "",
     display_before_start: false,
@@ -250,7 +250,7 @@ export default function AdminQuestionBanksPage() {
         description: "",
         university_id: "",
         price: 0,
-        currency: "CHF",
+        currency: "CHF", // Initial state default
         start_datetime: "",
         expiry_datetime: "",
         display_before_start: false,
@@ -275,7 +275,7 @@ export default function AdminQuestionBanksPage() {
       description: bank.description || "",
       university_id: bank.university_id,
       price: bank.price,
-      currency: bank.currency as "CHF" | "GBP" | "USD",
+      currency: bank.currency as "CHF" | "GBP" | "USD" | "EUR" | "TND",
       start_datetime: bank.start_datetime?.split(".")[0] || "",
       expiry_datetime: bank.expiry_datetime?.split(".")[0] || "",
       display_before_start: bank.display_before_start,
@@ -306,7 +306,7 @@ export default function AdminQuestionBanksPage() {
       description: "",
       university_id: "",
       price: 0,
-      currency: "CHF",
+      currency: "CHF", // Reset state default
       start_datetime: "",
       expiry_datetime: "",
       display_before_start: false,
@@ -439,7 +439,7 @@ export default function AdminQuestionBanksPage() {
                   <Label htmlFor="currency">Devise</Label>
                   <Select
                     value={formData.currency}
-                    onValueChange={(value: any) =>
+                    onValueChange={(value: "CHF" | "GBP" | "USD" | "EUR" | "TND") =>
                       setFormData({ ...formData, currency: value })
                     }
                   >
@@ -450,6 +450,8 @@ export default function AdminQuestionBanksPage() {
                       <SelectItem value="CHF">CHF</SelectItem>
                       <SelectItem value="GBP">GBP</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="TND">TND</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

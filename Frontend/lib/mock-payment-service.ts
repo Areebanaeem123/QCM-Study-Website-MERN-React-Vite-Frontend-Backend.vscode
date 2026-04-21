@@ -31,7 +31,7 @@ export class MockPaymentService {
     console.log("✓ [MOCK] Payment Intent Created")
     console.log(`  Payment Intent ID: ${paymentIntentId}`)
     console.log(`  Transaction ID: ${transactionId}`)
-    console.log(`  Amount: ${total} DT`)
+    console.log(`  Amount: ${total} €`)
     if (payload.voucher_code) {
       console.log(`  Voucher: ${payload.voucher_code}`)
     }
@@ -108,11 +108,11 @@ export class MockPaymentService {
     }
 
     console.log(`✓ [MOCK] Voucher Valid: ${code}`)
-    console.log(`  Discount: ${discountAmount.toFixed(2)} DT`)
+    console.log(`  Discount: ${discountAmount.toFixed(2)} €`)
 
     return {
       valid: true,
-      message: `Discount applied: ${discountAmount.toFixed(2)} DT`,
+      message: `Discount applied: ${discountAmount.toFixed(2)} €`,
       discount_amount: discountAmount
     }
   }

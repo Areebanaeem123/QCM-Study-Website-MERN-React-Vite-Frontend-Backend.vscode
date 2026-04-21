@@ -44,7 +44,7 @@ const BasketContext = createContext<BasketContextType | undefined>(undefined)
 export function BasketProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<BasketItem[]>([])
   const [voucher, setVoucher] = useState<VoucherInfo | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "apple_pay" | "google_pay" | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "apple_pay" | "google_pay" | null>("card")
 
   // Load basket from local storage on mount
   useEffect(() => {

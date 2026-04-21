@@ -33,7 +33,7 @@ export function StripePaymentForm({
     if (stripe && amount > 0) {
       const pr = stripe.paymentRequest({
         country: "CH", // Use appropriate country code
-        currency: "tnd",
+        currency: "eur",
         total: {
           label: "QCM Study Purchase",
           amount: Math.round(amount * 100),
@@ -131,7 +131,7 @@ export function StripePaymentForm({
           {paymentMethod === 'card' ? 'Détails de la Carte' : 
            paymentMethod === 'apple_pay' ? 'Payer avec Apple Pay' :
            paymentMethod === 'google_pay' ? 'Payer avec Google Pay' :
-           paymentMethod.replace('_', ' ')}
+           (paymentMethod || 'card').replace('_', ' ')}
         </label>
         
         <div className="min-h-[120px] flex flex-col justify-center">
@@ -180,7 +180,7 @@ export function StripePaymentForm({
                 </span>
               ) : (
                 <span key="idle">
-                  Payer {(amount).toFixed(2)} DT
+                  Payer {(amount).toFixed(2)} €
                 </span>
               )}
             </span>

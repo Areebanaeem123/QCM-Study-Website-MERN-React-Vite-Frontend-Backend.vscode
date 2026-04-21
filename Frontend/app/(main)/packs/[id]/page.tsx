@@ -155,7 +155,7 @@ export default function PackDetailPage() {
               <CardContent className="p-6">
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-foreground">{pack.price} DT</span>
+                    <span className="text-4xl font-bold text-foreground">{pack.price} €</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Paiement unique pour un accès à vie</p>
                 </div>

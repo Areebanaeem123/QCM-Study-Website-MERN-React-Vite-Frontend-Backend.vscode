@@ -69,7 +69,7 @@ export default function AdminPacksPage() {
     type: "pack" as "pack" | "mock_exam",
     university_id: "",
     price: 0,
-    currency: "CHF" as "CHF" | "GBP" | "USD",
+    currency: "CHF" as "CHF" | "GBP" | "USD" | "EUR" | "TND",
     start_datetime: "",
     expiry_datetime: "",
     display_before_start: false,
@@ -294,7 +294,7 @@ export default function AdminPacksPage() {
       type: "pack",
       university_id: "",
       price: 0,
-      currency: "CHF",
+      currency: "CHF", // Can be any of the union types, starting with default
       start_datetime: "",
       expiry_datetime: "",
       display_before_start: false,
@@ -490,7 +490,7 @@ export default function AdminPacksPage() {
                 <div>
                   <Label htmlFor="currency">Devise *</Label>
                   <Select value={formData.currency} onValueChange={(value) =>
-                    setFormData({ ...formData, currency: value as "CHF" | "GBP" | "USD" })
+                    setFormData({ ...formData, currency: value as "CHF" | "GBP" | "USD" | "EUR" | "TND" })
                   }>
                     <SelectTrigger>
                       <SelectValue />
@@ -499,6 +499,8 @@ export default function AdminPacksPage() {
                       <SelectItem value="CHF">CHF</SelectItem>
                       <SelectItem value="GBP">GBP</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="TND">TND</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
