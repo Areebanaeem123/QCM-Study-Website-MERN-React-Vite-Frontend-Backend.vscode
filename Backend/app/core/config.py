@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Stripe
     STRIPE_PUBLIC_KEY: str = ""
     STRIPE_SECRET_KEY: str = ""
-    STRIPE_CURRENCY: str = "tnd"
+    STRIPE_CURRENCY: str = "eur"
     
     @property
     def cors_origins_list(self) -> List[str]:
