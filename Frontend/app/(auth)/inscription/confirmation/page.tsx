@@ -23,16 +23,11 @@ export default function ConfirmationPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-center gap-3 rounded-lg bg-muted p-4">
-            <Mail className="h-5 w-5 text-primary" />
+            <CheckCircle className="h-5 w-5 text-green-600" />
             <p className="text-sm text-muted-foreground">
-              Un email de confirmation a été envoyé à votre adresse email. Veuillez cliquer sur le lien pour activer
-              votre compte.
+              Votre compte est maintenant prêt. Vous pouvez vous connecter pour accéder à vos cours et examens.
             </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Si vous ne recevez pas l'email dans les prochaines minutes, vérifiez votre dossier spam ou{" "}
-            <button className="text-primary hover:underline">cliquez ici pour renvoyer l'email</button>.
-          </p>
         </CardContent>
         <CardFooter className="flex-col gap-2">
           <Button asChild className="w-full">

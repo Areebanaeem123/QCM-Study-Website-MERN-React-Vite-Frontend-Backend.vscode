@@ -32,14 +32,15 @@ export function StripePaymentForm({
   useEffect(() => {
     if (stripe && amount > 0) {
       const pr = stripe.paymentRequest({
-        country: "CH", // Use appropriate country code
+        country: "CH", // Matches the country of your Stripe account
         currency: "eur",
         total: {
-          label: "QCM Study Purchase",
+          label: "QCM Study Bundle",
           amount: Math.round(amount * 100),
         },
         requestPayerName: true,
         requestPayerEmail: true,
+        // Google Pay specific configuration can be inferred by Stripe automatically
       })
 
       // Check the availability of the Payment Request API.

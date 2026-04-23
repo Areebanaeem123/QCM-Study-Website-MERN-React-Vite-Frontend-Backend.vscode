@@ -523,7 +523,7 @@ export default function CheckoutPage() {
             <div className="space-y-2">
               <h2 className="text-3xl font-bold">Merci pour votre achat !</h2>
               <p className="text-muted-foreground">
-                Votre commande a été validée avec succès. Un email de confirmation a été envoyé à {user?.email}.
+                Votre commande a été validée avec succès.
               </p>
               <p className="text-sm text-muted-foreground mt-4">
                 Vos packs et examens sont désormais disponibles dans votre tableau de bord.
